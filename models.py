@@ -107,7 +107,8 @@ class Group(db.Model, UserMixin):
     # Relationship with Users (students)
     members = db.relationship('User', backref='group', cascade='all, delete-orphan', passive_deletes=True)
 
-    def __init__(self, name, school_id):
+    def __init__(self, name, school_id, passcode=None, is_admin=False):
+        """Initialize a new group with a name, school_id, and optional passcode."""
         self.name = name
         self.school_id = school_id
         self.passcode = self.generate_passcode()  # Generate passcode when group is created

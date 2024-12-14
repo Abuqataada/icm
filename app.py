@@ -12,9 +12,7 @@ import os
 from werkzeug.utils import secure_filename
 import random
 import eventlet
-from dotenv import load_dotenv
 
-load_dotenv()
 # Adjust the URI to match your Aiven DB credentials
 AIVEN_DB_URI = os.getenv("ICM_DB_URI")
 

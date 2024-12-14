@@ -2,10 +2,22 @@ from extensions import db, app
 from sqlalchemy import text
 
 
+# Adding Admin school and group
+"""from models import School, Group
+with app.app_context():
+    # Create the school
+    school = School(name='Admin School', season=1)
+    # Create the group
+    group = Group(name='Admin Group', school_id=1, passcode='1234ABCD', is_admin=True)
+    # Add the group to the session
+    db.session.add(group)
+    # Add the school to the session
+    db.session.add(school)
+    db.session.commit()
+    print('Admin Group and School user created successfully!')
+"""
 # Adding admin user(s)
-"""from app import db, app
 from models import User
-
 # Create a new admin user
 with app.app_context():
     admin = User(
@@ -19,7 +31,7 @@ with app.app_context():
     db.session.add(admin)
     db.session.commit()
 
-    print('Admin user created successfully!')"""
+    print('Admin user created successfully!')
 
 
 
@@ -223,9 +235,14 @@ with app.app_context():
 
 
 
-with app.app_context():
+
+
+
+# Removing the questions table from the database
+# This is useful if you want to recreate the table with a different schema or if you no longer need it.
+"""with app.app_context():
     db.session.execute(text('DROP TABLE IF EXISTS questions;'))
     #db.session.commit()
     #db.session.execute(text('CREATE TABLE questions (id INTEGER PRIMARY KEY AUTOINCREMENT, question_text TEXT NOT NULL, option_a TEXT NOT NULL, option_b TEXT NOT NULL, option_c TEXT NOT NULL, option_d TEXT NOT NULL, correct_answer INTEGER NOT NULL, image TEXT);'))
     db.session.commit()
-
+"""

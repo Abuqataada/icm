@@ -1,11 +1,10 @@
 import subprocess
-import tkinter as tk
 from tkinter import messagebox
-from tkinter import ttk
 import requests
 import socket
 import app
 import threading
+import customtkinter as ctk
 
 
 # Global variable to store the Flask process
@@ -37,10 +36,10 @@ def run_flask():
         # Optionally read stdout and stderr for debugging
         def read_output():
             for line in flask_process.stdout:
-                messagebox.showwarning("Warning", line.decode('utf-8'), end="")  # Print stdout to console (or log it)
+                messagebox.showwarning("Warning", line.decode('utf-8'))
 
             for line in flask_process.stderr:
-                messagebox.showwarning("Warning", line.decode('utf-8'), end="")  # Print stderr to console (or log it)
+                messagebox.showwarning("Warning", line.decode('utf-8'))
 
         # Run output reading in a separate thread to avoid blocking the GUI
         output_thread = threading.Thread(target=read_output)
@@ -59,8 +58,9 @@ def stop_flask():
         return
 
     try:
+        ip_address = get_local_ip()
         # Send a POST request to the shutdown route
-        response = requests.post("http://127.0.0.1:5000/shutdown")
+        response = requests.post("http://{ip_address}:5000/shutdown")
         response.raise_for_status()  # Raise an error for bad responses
 
         # Terminate the Flask process
@@ -69,65 +69,54 @@ def stop_flask():
         flask_process = None
         messagebox.showinfo("Stopped", "ICM CLICKATHON server has been stopped.")
     except requests.ConnectionError:
+        flask_process = None
         messagebox.showerror(
             "Error", "Unable to connect to the server. It may already be stopped."
         )
     except requests.Timeout:
+        flask_process = None
         messagebox.showerror("Error", "Request timed out while trying to stop the server.")
     except requests.HTTPError as http_err:
         messagebox.showerror("Error", f"HTTP error occurred: {http_err}")
+        flask_process = None
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
+        flask_process = None
 
 
 def exit_app():
     """Exit the application."""
     if flask_process:
         stop_flask()  # Ensure the Flask server is stopped before exiting
-    root.destroy()  # Close the application window
+    app.destroy()  # Close the application window
 
+
+# Initialize CustomTkinter
+ctk.set_appearance_mode("System")  # Modes: "System" (default), "Dark", "Light"
+ctk.set_default_color_theme("blue")  # Themes: "blue" (default), "dark-blue", "green"
 
 # Create the main window
-root = tk.Tk()
-root.title("ICM CLICKATHON App Server")
+app = ctk.CTk()
+app.title("ICM CLICKATHON App Server")
+app.geometry("400x300")
 
-# Set the window size
-root.geometry("400x300")
-
-# Create a style for ttk
-style = ttk.Style()
-style.configure("TLabel", padding=10)
-style.configure("TButton", padding=10)
-
-# Custom style for the exit button
-style.configure(
-    "Exit.TButton", background="red", foreground="black", font=("Arial", 10, "bold")
-)
-style.map(
-    "Exit.TButton",
-    background=[("active", "darkred")],  # Change to dark red when active
-    foreground=[("active", "red")],  # Change text color when active
-)
-
-# Display the local IP address
+# Display IP
 ip_address = get_local_ip()
-ip_label = ttk.Label(root, text=f"Server IP: {ip_address}")
-ip_label.pack(pady=5)
+ip_label = ctk.CTkLabel(app, text=f"Server IP: {ip_address}", font=ctk.CTkFont(size=14))
+ip_label.pack(pady=10)
 
-# Display the URL with the local IP address
-url_label = ttk.Label(root, text=f"Connect to: http://{ip_address}:5000")
+url_label = ctk.CTkLabel(app, text=f"Connect to: http://{ip_address}:5000", font=ctk.CTkFont(size=14))
 url_label.pack(pady=5)
 
-# Create buttons to run and stop the Flask app
-run_button = ttk.Button(root, text="Run App Server", command=run_flask)
+# Buttons
+run_button = ctk.CTkButton(app, text="Start ICM Server", command=run_flask)
 run_button.pack(pady=10)
 
-stop_button = ttk.Button(root, text="Stop Server", command=stop_flask)
+stop_button = ctk.CTkButton(app, text="Stop Server", command=stop_flask)
 stop_button.pack(pady=10)
 
-# Create an exit button with custom style
-exit_button = ttk.Button(root, text="Exit", command=exit_app, style="Exit.TButton")
-exit_button.pack(side=tk.RIGHT, padx=10, pady=10)
+exit_button = ctk.CTkButton(app, text="Exit", command=exit_app, fg_color="red", hover_color="darkred", text_color="white")
+exit_button.pack(pady=20)
 
-# Start the GUI event loop
-root.mainloop()
+# Run the app
+app.mainloop()
