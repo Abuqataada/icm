@@ -14,7 +14,7 @@ import random
 import eventlet
 
 # Adjust the URI to match your Aiven DB credentials
-AIVEN_DB_URI = os.getenv("ICM_DB_URI")
+AIVEN_DB_URI = os.getenv("ICM_DB_URI", "sqlite:///users.db")
 
 aiven_engine = create_engine(AIVEN_DB_URI)
 AivenSession = sessionmaker(bind=aiven_engine)
