@@ -1,0 +1,426 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+::after,
+::before {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+li {
+    list-style: none;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: 3.4rem;
+  color: #56a5eb;
+  margin-bottom: 2rem;
+}
+
+h1 > span {
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+h2 {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 2.8rem;
+  font-weight: 500;
+}
+
+html, body {
+  height: 100%;
+  margin: 0; /* Remove default margin */
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: url('../images/home_backgroud.jpg');
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.main {
+  height: 100vh; /* Ensure the height is restricted to viewport height */
+  overflow: auto; /* Allows scrolling if content overflows */
+  flex-grow: 1; /* Take up remaining space */
+  background: url('../images/home_background.jpg');
+  background-color: #fafbfe;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#sidebar {
+  height: 100%;
+  width: 70px; /* or adjust as needed */
+  min-width: 70px;
+  background-color: #0e2238;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.25s ease-in-out;
+}
+
+/*#sidebar {
+  width: 70px;
+  min-width: 70px;
+  z-index: 1000;
+  transition: all .25s ease-in-out;
+  background-color: #0e2238;
+  display: flex;
+  flex-direction: column;
+}*/
+
+#sidebar.expand {
+  width: 260px;
+  min-width: 260px;
+}
+
+/* Style for the sidebar header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #333; /* Optional border for separation */
+}
+
+/* Style for the toggle button */
+.toggle-btn {
+  background-color: transparent;
+  cursor: pointer;
+  border: 0;
+  padding: 1rem;
+  margin-right: 1rem;
+}
+
+.toggle-btn i {
+  font-size: 1.5rem;
+  color: #FFF;
+}
+
+/* Style for the sidebar logo */
+.sidebar-logo {
+  flex-grow: 1;
+}
+
+.sidebar-logo a {
+  color: #FFF;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+/* Ensure the button and logo are aligned properly when the sidebar is expanded */
+#sidebar.expand .sidebar-header {
+  justify-content: space-between;
+}
+
+#sidebar:not(.expand) .sidebar-logo,
+#sidebar:not(.expand) a.sidebar-link span {
+  display: none;
+}
+
+/* Style for the sidebar navigation */
+.sidebar-nav {
+  flex: 1; /* Allow this section to take up remaining space */
+  padding: 2rem 0;
+}
+
+/* Style for each sidebar link */
+a.sidebar-link {
+  padding: 0.625rem 1.625rem;
+  color: #FFF;
+  display: block;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  border-left: 3px solid transparent;
+}
+
+.sidebar-link i {
+  font-size: 1.1rem;
+  margin-right: 0.75rem;
+}
+
+a.sidebar-link:hover {
+  background-color: rgba(255, 255, 255, 0.075);
+  border-left: 3px solid #3b7ddd;
+}
+
+.sidebar-item {
+    position: relative;
+}
+
+#sidebar:not(.expand) .sidebar-item .sidebar-dropdown {
+    position: absolute;
+    top: 0;
+    left: 70px;
+    background-color: #0e2238;
+    padding: 0;
+    min-width: 15rem;
+    display: none;
+}
+
+#sidebar:not(.expand) .sidebar-item:hover .has-dropdown+.sidebar-dropdown {
+    display: block;
+    max-height: 15em;
+    width: 100%;
+    opacity: 1;
+}
+
+#sidebar.expand .sidebar-link[data-bs-toggle="collapse"]::after {
+    border: solid;
+    border-width: 0 .075rem .075rem 0;
+    content: "";
+    display: inline-block;
+    padding: 2px;
+    position: absolute;
+    right: 1.5rem;
+    top: 1.4rem;
+    transform: rotate(-135deg);
+    transition: all .2s ease-out;
+}
+
+#sidebar.expand .sidebar-link[data-bs-toggle="collapse"].collapsed::after {
+    transform: rotate(45deg);
+    transition: all .2s ease-out;
+}
+
+/* Style for the sidebar footer */
+.sidebar-footer {
+  padding: 1rem;
+  border-top: 1px solid #333; /* Optional border for separation */
+}
+
+/* Top Navbar for Small Screens */
+#top-navbar {
+  display: none;
+}
+
+.navbar-nav .nav-link {
+  font-size: 1rem;
+  padding: 0.75rem 1.25rem;
+}
+
+.navbar-toggler {
+  border: none;
+}
+
+
+/* Utilities */
+.container {
+    width: 100vw;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 80rem;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.container > * {
+    width: 100%;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.flex-center {
+    justify-content: center;
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Buttons */
+.btn {
+    font-size: 1.8rem;
+    padding: 1rem 0;
+    width: 20rem;
+    text-align: center;
+    border: 0.1rem solid #56a5eb;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    color: #56a5eb;
+    background-color: white;
+}
+
+.btn:hover {
+    cursor: pointer;
+    box-shadow: 0 0.4rem 1.4rem 0 rgba(86, 185, 235, 0.5);
+    transform: translateY(-0.1rem);
+    transition: transform 150ms;
+}
+
+.btn[disabled]:hover {
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+/* Media Queries for Responsive Design */
+@media (max-width: 768px) {
+  #sidebar {
+      display: none;
+  }
+
+  #top-navbar {
+      display: block;
+  }
+}
+
+/* Adjustments for mobile view */
+@media (max-width: 768px) {
+  #sidebar {
+      display: none;
+  }
+}

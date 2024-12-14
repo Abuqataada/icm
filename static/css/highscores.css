@@ -1,0 +1,176 @@
+/* Layout for the top three positions */
+.top-three {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 30px;
+  font-family: serif;
+}
+
+.top-row, .second-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* Style for each card */
+.position-card {
+  width: 270px;
+  text-align: center;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  background-color: #f7f7f7;
+  opacity: 0; /* Initially hidden for animation */
+  transform: translateY(20px); /* Initial position for animation */
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+/* Gold card styling (bigger and centered) */
+.first {
+  width: 350px;
+  background-color: #ffd700; /* Gold */
+  margin-bottom: 20px;
+  animation-delay: 0.2s; /* Delay animation for Gold card */
+}
+
+/* Silver and bronze card styling */
+.second {
+  background-color: #c0c0c0; /* Silver */
+  animation-delay: 0.4s; /* Delay animation for Silver card */
+}
+
+.third {
+  background-color: #cd7f32; /* Bronze */
+  animation-delay: 0.6s; /* Delay animation for Bronze card */
+}
+
+/* Badge images styling */
+.position-card img {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 10px;
+}
+
+/* Fade-in animation for top three cards */
+@keyframes fadeInUp {
+  to {
+      opacity: 1;
+      transform: translateY(0);
+  }
+}
+
+/* Fade-in effect for table rows */
+.fade-in-row {
+  opacity: 0;
+  animation: fadeIn 0.5s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+      opacity: 1;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.sidebar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+.sidebar a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  color: #f1f1f1;
+}
+
+.sidebar .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+a.sidebar-link {
+  padding: .625rem 1.625rem;
+  color: #FFF;
+  display: block;
+  font-size: 1rem;
+  white-space: nowrap;
+  border-left: 3px solid transparent;
+}
+
+a.sidebar-link:hover {
+  background-color: #818181;
+}
+.openbtn {
+  font-size: 20px;
+  cursor: pointer;
+  background-color: white;
+  color: #56A5EB;
+  padding: 10px;
+  border: none;
+  position: fixed;
+}
+
+.openbtn:hover {
+  background-color: #444;
+}
+
+#main {
+  transition: margin-left .5s;
+  padding: 16px;
+}
+
+/* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+@media screen and (max-height: 450px) {
+  .sidebar {padding-top: 15px;}
+  .sidebar a {font-size: 18px;}
+}

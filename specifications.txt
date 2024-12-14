@@ -1,0 +1,39 @@
+The ideal duration for each math question depends on its complexity and the expected age or skill level of the participants. Here are some recommendations for setting appropriate times based on common assessment practices:
+
+1. Basic Calculation and Recall Questions (simple arithmetic, straightforward algebra):
+   - Time: 30–45 seconds
+   - These questions often test direct recall or quick calculations, so 30–45 seconds encourages prompt answers without overly rushing participants.
+
+2. Intermediate Problem-Solving Questions (slightly more involved calculations, simple word problems):
+   - Time: 1–2 minutes
+   - This duration allows for slightly longer reasoning while still encouraging quick thinking, which is ideal for typical middle and high school-level questions.
+
+3. Advanced Problem-Solving and Critical Thinking (complex algebra, geometry proofs, multi-step word problems):
+   - Time: 3–5 minutes
+   - Higher-level math questions, especially those requiring multiple steps, should allow for around 3–5 minutes, so participants aren’t overly penalized for taking extra time to reason through them.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Suggested Approach for Scoring Based on Response Time ###
+To keep things fair and responsive, you could score each question out of 100%, with a gradual reduction in score based on how long the user takes within the allocated time.
+
+Scoring Formula:
+For example, if a question has a time limit of T seconds:
+   - Score = Base score x (1 - time taken/T)
+   
+If the participant answers within 60% of the allocated time or less, they might receive full marks; beyond that, you can gradually deduct points until the base threshold is met. This approach rewards quick, accurate answers without creating too much pressure for students.
+
+
+
+

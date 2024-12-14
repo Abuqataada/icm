@@ -1,0 +1,515 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+
+
+/* Basic Reset */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    font-weight: bolder;
+}
+
+.tc {
+    color: white;
+}
+
+#question {
+    font-size: larger;
+}
+
+#question-image {
+    display: none;
+}
+
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    gap: 10px; /* Adjust the space between buttons */
+    margin-top: 20px;
+}
+
+.grid-item {
+    padding: 15px;
+    font-size: 16px;
+    text-align: center;
+    background-color: #034611;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    width: 100%; /* Make buttons responsive */
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
+}
+
+
+/* Main container styling */
+.container {
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping on smaller screens */
+    gap: 20px; /* Space between columns */
+}
+
+.column {
+    flex: 1; /* Columns take equal space */
+    min-width: 300px; /* Ensures columns don’t shrink too small on smaller screens */
+    max-width: 50%; /* Columns take up to 50% width on larger screens */
+}
+
+#messages {
+    background-color: #f8f9fa; /* Light gray background for better visibility */
+    border: 1px solid #dee2e6; /* Subtle border */
+    padding: 15px;
+    border-radius: 5px;
+    overflow-y: auto; /* Add scroll for overflowing messages */
+    max-height: 300px; /* Optional: Limit the height of the messages section */
+}
+
+@media (max-width: 768px) {
+    .column {
+        max-width: 100%; /* On smaller screens, columns stack */
+    }
+}
+
+/* Flex properties for school items */
+.school-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Space between items */
+    background-color: khaki;
+}
+
+/* Individual school item styling */
+.school-item {
+    flex: 1 1 calc(50% - 20px); /* Two columns */
+    background: lemonchiffon;
+    border: 1px solid #e3e3e3;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+/* Form button styling */
+.delete-form {
+    margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .school-item {
+        flex: 1 1 100%; /* Single column on smaller screens */
+    }
+
+    .school-list {
+        gap: 10px; /* Reduced gap for smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    #main {
+        padding: 10px; /* Reduced padding */
+    }
+
+    h1, h3, h4 {
+        font-size: 1.5em; /* Adjust font sizes */
+    }
+
+    .school-item {
+        padding: 8px; /* Adjust padding */
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Fade-out and fade-in animations */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+}
+
+.fade-in {
+    opacity: 1;
+    transition: opacity 0.5s ease-in;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+::after,
+::before {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+li {
+    list-style: none;
+}
+
+/*h1 {
+    font-weight: 600;
+    font-size: 1.5rem;
+}*/
+
+h1,
+h2,
+h3,
+h4 {
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: 3.4rem;
+  color: #034611;
+  margin-bottom: 2rem;
+}
+
+.ga-maamli-regular {
+    font-family: "Ga Maamli", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+body {
+    font-family: 'Poppins', sans-serif;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: row;
+}
+
+.main {
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    transition: all 0.35s ease-in-out;
+    background-color: #fafbfe;
+}
+
+/* Buttons */
+.btn {
+    font-size: 0.8rem;
+    padding: 0.6rem 0;
+    width: 10rem;
+    text-align: center;
+    border: 0.1rem solid #034611;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    color: #034611;
+    background-color: white;
+}
+
+.btn:hover {
+    cursor: pointer;
+    box-shadow: 0 0.4rem 1.4rem 0 rgba(86, 185, 235, 0.5);
+    transform: translateY(-0.1rem);
+    transition: transform 150ms;
+}
+
+.toggle-btn {
+    background-color: transparent;
+    cursor: pointer;
+    border: 0;
+    padding: 1rem 1.5rem;
+}
+
+.toggle-btn i {
+    font-size: 1.5rem;
+    color: #FFF;
+}
+
+.sidebar-logo {
+    margin: auto 0;
+}
+
+.sidebar-logo a {
+    color: #FFF;
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.text-center {
+    text-align: center;
+}
+
+
+@media (max-width: 991.98px) {
+    .wrapper {
+        flex-direction: column;
+    }
+    
+    #sidebar {
+        display: none; /* Hide the sidebar on small screens */
+    }
+
+    #top-navbar {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .main {
+        margin-top: 56px; /* Adjust based on top navbar height */
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.sidebar {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+  }
+  
+  .sidebar a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #818181;
+    display: block;
+    transition: 0.3s;
+  }
+  
+  .sidebar a:hover {
+    color: #f1f1f1;
+  }
+  
+  .sidebar .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+  }
+  
+  a.sidebar-link {
+    padding: .625rem 1.625rem;
+    color: #FFF;
+    display: block;
+    font-size: 1rem;
+    white-space: nowrap;
+    border-left: 3px solid transparent;
+}
+
+a.sidebar-link:hover {
+    background-color: #818181;
+}
+  .openbtn {
+    font-size: 20px;
+    cursor: pointer;
+    background-color: white;
+    color: #56A5EB;
+    padding: 10px;
+    border: none;
+    position: fixed;
+  }
+  
+  .openbtn:hover {
+    background-color: #444;
+  }
+  
+  #main {
+    transition: margin-left .5s;
+    padding: 16px;
+  }
+  
+  /* On smaller screens, where height is less than 450px, change the style of the sidenav (less padding and a smaller font size) */
+  @media screen and (max-height: 450px) {
+    .sidebar {padding-top: 15px;}
+    .sidebar a {font-size: 18px;}
+  }
+
+
+
+
+
+
+
+
+
+
+
+/* Modal style*/
+.modal-dialog {
+    --bs-modal-width: 80%;
+    max-width: var(--bs-modal-width);
+}
+
+.results-table {
+    width: 100%;
+    border-collapse: collapse; /* Removes space between borders */
+    margin: 20px 0; /* Adds space around the table */
+    font-family: Arial, sans-serif; /* Font for the table */
+  }
+  
+  .results-table th,
+  .results-table td {
+    border: 1px solid #dddddd; /* Light grey border for cells */
+    text-align: left; /* Aligns text to the left */
+    padding: 12px; /* Adds space inside cells */
+  }
+  
+  .results-table th {
+    background-color: #4CAF50; /* Green background for header */
+    color: white; /* White text for header */
+    font-weight: bold; /* Makes header text bold */
+  }
+  
+  .results-table tr:nth-child(even) {
+    background-color: #f2f2f2; /* Light grey background for even rows */
+  }
+  
+  .results-table tr:hover {
+    background-color: #ddd; /* Changes background on hover */
+  }
+  
+  .results-table tr:first-child th {
+    border-top: 2px solid #4CAF50; /* Thicker top border for header */
+  }
+
+  @media screen and (max-height: 900px) {
+    .modal-dialog {
+        --bs-modal-width: 100%;
+        max-width: var(--bs-modal-width);
+        font-size: small;
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* Adding Questions page style */
+  #toolbar {
+    margin-bottom: 10px;
+  }
+  .toolbar {
+    margin: 5px;
+    padding: 5px 10px;
+    font-size: 16px;
+    cursor: pointer;
+    border: 0.5px;
+  }
+  .toolbar:hover {
+    background-color: #07b310;
+    color: white;
+  }
+  .toolbardiv {
+    border: 1px solid #ccc;
+  }
+  #textField {
+    width: 100%;
+    height: 50px;
+    border: 0px solid #ccc;
+    padding: 10px;
+    font-size: 16px;
+    overflow-y: auto;
+  }

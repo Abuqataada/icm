@@ -1,0 +1,162 @@
+[
+  {
+    "question": "Inside which HTML element do we put the JavaScript?",
+    "choice1": "<script>",
+    "choice2": "<javascript>",
+    "choice3": "<js>",
+    "choice4": "<scripting>",
+    "answer": 1
+  },
+  {
+    "question": "What is the correct syntax for referring to an external script called 'xxx.js'?",
+    "choice1": "<script href='xxx.js'>",
+    "choice2": "<script name='xxx.js'>",
+    "choice3": "<script src='xxx.js'>",
+    "choice4": "<script file='xxx.js'>",
+    "answer": 3
+  },
+  {
+    "question": "How do you write 'Hello World' in an alert box?",
+    "choice1": "msgBox('Hello World');",
+    "choice2": "alertBox('Hello World');",
+    "choice3": "msg('Hello World');",
+    "choice4": "alert('Hello World');",
+    "answer": 4
+  },
+  {
+    "question": "Which of the following is the correct syntax to print a page using JavaScript?",
+    "choice1": "window.print();",
+    "choice2": "browser.print();",
+    "choice3": "navigator.print();",
+    "choice4": "document.print();",
+    "answer": 1
+  },
+  {
+    "question": "How do you create a function in JavaScript?",
+    "choice1": "function myFunction()",
+    "choice2": "function:myFunction()",
+    "choice3": "function = myFunction()",
+    "choice4": "function->myFunction()",
+    "answer": 1
+  },
+  {
+    "question": "How do you call a function named 'myFunction'?",
+    "choice1": "call myFunction()",
+    "choice2": "call function myFunction()",
+    "choice3": "myFunction()",
+    "choice4": "Call.myFunction()",
+    "answer": 3
+  },
+  {
+    "question": "How can you add a comment in JavaScript?",
+    "choice1": "'This is a comment",
+    "choice2": "//This is a comment",
+    "choice3": "<!--This is a comment-->",
+    "choice4": "#This is a comment",
+    "answer": 2
+  },
+  {
+    "question": "Which event occurs when the user clicks on an HTML element?",
+    "choice1": "onmouseclick",
+    "choice2": "onchange",
+    "choice3": "onclick",
+    "choice4": "onmouseover",
+    "answer": 3
+  },
+  {
+    "question": "How do you declare a JavaScript variable?",
+    "choice1": "v carName;",
+    "choice2": "var carName;",
+    "choice3": "variable carName;",
+    "choice4": "let carName;",
+    "answer": 2
+  },
+  {
+    "question": "Which operator is used to assign a value to a variable?",
+    "choice1": "*",
+    "choice2": "-",
+    "choice3": "=",
+    "choice4": "+",
+    "answer": 3
+  },
+  {
+    "question": "What will the following code return: Boolean(10 > 9)?",
+    "choice1": "true",
+    "choice2": "false",
+    "choice3": "NaN",
+    "choice4": "undefined",
+    "answer": 1
+  },
+  {
+    "question": "What does the 'typeof' operator return?",
+    "choice1": "The data type of the operand",
+    "choice2": "The value of the operand",
+    "choice3": "The variable name",
+    "choice4": "The length of the variable",
+    "answer": 1
+  },
+  {
+    "question": "Which built-in method returns the character at the specified index?",
+    "choice1": "charAt()",
+    "choice2": "getCharAt()",
+    "choice3": "characterAt()",
+    "choice4": "None of the above",
+    "answer": 1
+  },
+  {
+    "question": "Which of the following function of Number object returns the number's value?",
+    "choice1": "valueOf()",
+    "choice2": "toString()",
+    "choice3": "toLocaleString()",
+    "choice4": "toPrecision()",
+    "answer": 1
+  },
+  {
+    "question": "What is the correct way to write a JavaScript array?",
+    "choice1": "var colors = (1:'red', 2:'green', 3:'blue')",
+    "choice2": "var colors = 1 = ('red'), 2 = ('green'), 3 = ('blue')",
+    "choice3": "var colors = 'red', 'green', 'blue'",
+    "choice4": "var colors = ['red', 'green', 'blue']",
+    "answer": 4
+  },
+  {
+    "question": "How do you round the number 7.25 to the nearest integer?",
+    "choice1": "round(7.25)",
+    "choice2": "Math.round(7.25)",
+    "choice3": "Math.rnd(7.25)",
+    "choice4": "rnd(7.25)",
+    "answer": 2
+  },
+  {
+    "question": "Which of the following function of Array object removes the last element from an array and returns that element?",
+    "choice1": "pop()",
+    "choice2": "push()",
+    "choice3": "join()",
+    "choice4": "map()",
+    "answer": 1
+  },
+  {
+    "question": "Which of the following function of String object returns the calling string value converted to upper case?",
+    "choice1": "toUpperCase()",
+    "choice2": "toUpper()",
+    "choice3": "changeCase(case)",
+    "choice4": "None of the above",
+    "answer": 1
+  },
+  {
+    "question": "Which of the following is true about variable naming conventions in JavaScript?",
+    "choice1": "JavaScript variable names must begin with a letter or the underscore character.",
+    "choice2": "JavaScript variable names are case-sensitive.",
+    "choice3": "Both of the above.",
+    "choice4": "None of the above.",
+    "answer": 3
+  },
+  {
+    "question": "Which of the following function of String object returns the primitive value of the specified object?",
+    "choice1": "toLocaleUpperCase()",
+    "choice2": "toUpperCase()",
+    "choice3": "toString()",
+    "choice4": "valueOf()",
+    "answer": 4
+  }
+]

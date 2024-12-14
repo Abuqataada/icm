@@ -1,0 +1,274 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+::after,
+::before {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+li {
+    list-style: none;
+}
+
+/*h1 {
+    font-weight: 600;
+    font-size: 1.5rem;
+}*/
+
+h1,
+h2,
+h3,
+h4 {
+  margin-bottom: 0.5rem;
+  color: #000000;
+}
+
+h1 {
+  font-size: 3.4rem;
+  color: #034611;
+  margin-bottom: 2rem;
+}
+
+.ga-maamli-regular {
+    font-family: "Ga Maamli", sans-serif;
+    font-weight: 400;
+    font-style: normal;
+  }
+
+body {
+    font-family: 'Poppins', sans-serif;
+}
+.tc {
+    color: black;
+    font-size: large;
+    font-weight: bold;
+}
+.wrapper {
+    display: flex;
+    flex-direction: row;
+    min-height: 100vh;
+}
+
+.main {
+    flex: 1;
+    min-height: 100vh;
+    width: 100%;
+    overflow: hidden;
+    transition: all 0.35s ease-in-out;
+    background: url('../images/icm.png') no-repeat center center/cover;
+    background-color: #d0fffd;
+}
+
+#sidebar {
+    width: 70px;
+    min-width: 70px;
+    z-index: 1000;
+    transition: all .25s ease-in-out;
+    background-color: #0e2238;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
+#sidebar.expand {
+    width: 260px;
+    min-width: 260px;
+}
+
+
+/* Buttons */
+.btn {
+    font-size: 1.8rem;
+    padding: 1rem 0;
+    width: 20rem;
+    text-align: center;
+    border: 0.1rem solid #06b30e;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    color: #034611;
+    background-color: white;
+}
+
+.btn:hover {
+    cursor: pointer;
+    box-shadow: 0 0.4rem 1.4rem 0 rgba(0, 185, 2, 0.5);
+    transform: translateY(-0.1rem);
+    transition: transform 150ms;
+}
+
+.toggle-btn {
+    background-color: transparent;
+    cursor: pointer;
+    border: 0;
+    padding: 1rem 1.5rem;
+}
+
+.toggle-btn i {
+    font-size: 1.5rem;
+    color: #FFF;
+}
+
+.text-center {
+    text-align: center;
+}
+
+
+
+
+
+
+
+
+
+
+.grid-container {
+    text-align: center;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Two columns */
+    gap: 10px; /* Adjust the space between buttons */
+    margin-top: 20px;
+}
+
+.grid-item {
+    padding: 15px;
+    font-size: 15px;
+    text-align: center;
+    background-color: #034611;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    width: 100%; /* Make buttons responsive*/ 
+    height: 100%;
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
+    transition: background-color 0.3s ease; /* Smooth transition for color change */
+}
+
+.grid-item:hover {
+    background-color: #034611;
+}
+
+
+
+
+
+
+
+
+
+.students-list {
+    border-radius: 50px;
+    padding: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    border: 1px solid #034611;
+}
+.students-list ol {
+    padding-left: 0;
+    border-radius: 50px;
+}
+
+.students-list li {
+    padding: 8px 10px;
+    color: black;
+    font-weight: bold;
+    width: 100%;
+    text-align: left;
+}
+
+/* Responsive passcode hiding */
+.passcode-text {
+    font-size: 1.2rem;
+}
+
+.para-text {
+    color: aliceblue;
+}
+
+@media (max-width: 768px) {
+    .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .passcode-text {
+        font-size: 1rem;
+    }
+
+    h4, p {
+        font-size: 1.2rem;
+    }
+
+    ul {
+        padding-left: 0;
+    }
+
+    .container {
+        padding: 0 15px;
+    }
+}
+
+.disabled-link {
+    color: gray;
+    pointer-events: none;
+    text-decoration: none;
+    font-size: 3em;
+}
+
+.correct {
+    background-color: green;
+    padding: 15px;
+    font-size: 16px;
+    text-align: center;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    width: 100%; /* Make buttons responsive */
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
+}
+
+.incorrect {
+    background-color: red;
+    padding: 15px;
+    font-size: 16px;
+    text-align: center;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    width: 100%; /* Make buttons responsive */
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
+    
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Fade-out and fade-in animations */
+.fade-out {
+    opacity: 0;
+    transition: opacity 0.5s ease-out;
+}
+
+.fade-in {
+    opacity: 1;
+    transition: opacity 0.5s ease-in;
+}

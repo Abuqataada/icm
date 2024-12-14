@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login/Sign Up - ICM MATH CLICKATHON</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons/css/boxicons.min.css' rel='stylesheet'>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/flashmsg.css') }}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ga+Maamli&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Spinner, initially hidden -->
+    <div class="spinner" id="loadingSpinner"></div>
+    <div id="backgroundOverlay"></div>
+    <div class="container">
+        <!-- Flash message div -->
+        <div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-button active" data-tab="login">Login</button>
+            <button class="tab-button" data-tab="signup">Sign Up</button>
+        </div>
+
+        <div id="login" class="tab-content active">
+            <h2 class="ga-maamli-regular">Login to ICM MATH CLICKATHON</h2>
+            <form id="loginForm" action="{{ url_for('home') }}" method="POST">
+                <div class="input-group">
+                    <select id="school" name="school_id" required aria-label="Schoolname">
+                        <option value="" selected>Select School</option>
+                        <!-- Options will be added here by JavaScript -->
+                    </select>
+                </div>
+                <div class="input-group">
+                    <i class='bx bxs-lock-alt'></i>
+                    <input type="text" name="group_passcode" placeholder="Enter Group Passcode" required>
+                </div>
+                <button type="submit" aria-label="Login">Login</button>
+            </form>
+        </div>
+
+        <div id="signup" class="tab-content">
+            <h2 class="ga-maamli-regular">Sign Up for ICM MATH CLICKATHON</h2>
+            <form action="/signup" method="POST">
+                <div class="input-group">
+                    <i class='bx bxs-user'></i>
+                    <input type="text" name="fullname" placeholder="Fullname" required aria-label="Fullname">
+                </div>
+                <div class="input-group">
+                    <select id="school-dropdown" name="school_id" required aria-label="Schoolname">
+                        <option value="" selected>Select School</option>
+                        <!-- Populate this dynamically -->
+                        <!-- Example: <option value="1">School A</option> -->
+                    </select>
+                </div>
+                <div class="input-group">
+                    <select class="form-select" id="group-dropdown" name="group_id" required aria-label="Groupname">
+                        <option value="" selected disabled>Select a group</option>
+                        <!-- Groups will be populated dynamically -->
+                    </select>
+                </div>
+                <button type="submit" aria-label="Sign Up">Sign Up</button>
+            </form>
+            <div class="links">
+                Already have an account? <a href="#" class="login-link" data-tab="login">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+    <script>
+        // Function to fetch and populate schools
+        async function populateSchools() {
+            try {
+                const response = await fetch('/get-schools');
+                const data = await response.json();
+                const dropdown = document.getElementById('school-dropdown');
+                
+                // Clear existing options
+                dropdown.innerHTML = '<option value="" selected>Select School</option>';
+                
+                data.schools.forEach(school => {
+                    const option = document.createElement('option');
+                    option.value = school.id;
+                    option.textContent = school.name;
+                    dropdown.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching schools:', error);
+            }
+        }
+    
+        // Populate the schools dropdown when the page loads
+        document.addEventListener('DOMContentLoaded', populateSchools);
+    
+        // Function to fetch and populate groups
+        document.getElementById('school-dropdown').addEventListener('change', function () {
+            const schoolId = this.value;
+            const groupSelect = document.getElementById('group-dropdown');
+    
+            // Clear the current group options
+            groupSelect.innerHTML = '<option value="" selected disabled>Select a group</option>';
+    
+            // Fetch groups based on selected school
+            fetch(`/get_groups/${schoolId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(group => {
+                        const option = document.createElement('option');
+                        option.value = group.id;
+                        option.textContent = `${group.name} (${group.student_count}/4 students)`;
+    
+                        // Disable the group if it has 4 members
+                        if (group.student_count >= 4) {
+                            option.disabled = true;
+                        }
+    
+                        groupSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching groups:', error);
+                });
+            });
+    </script>
+    
+</body>
+</html>

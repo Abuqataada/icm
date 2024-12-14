@@ -1,0 +1,85 @@
+.choice-container {
+  display: flex;
+  margin-bottom: 0.1rem;
+  width: 100%;
+  font-size: 1rem;
+  border: 0.1rem solid rgb(86, 165, 235, 0.25);
+  background-color: white;
+}
+
+.choice-container:hover {
+  cursor: pointer;
+  box-shadow: 0 0.4rem 1.4rem 0 rgba(86, 185, 235, 0.5);
+  transform: translateY(-0.1rem);
+  transition: transform 150ms;
+}
+
+.choice-prefix {
+  padding: 1.9rem 1.5rem;
+  background-color: #56a5eb;
+  color: white;
+  margin: 0;
+}
+
+.choice-text {
+  padding: 1rem;
+  width: 100%;
+}
+
+.correct {
+  background-color: #28a745;
+}
+
+.incorrect {
+  background-color: #dc3545;
+}
+
+/* HUD */
+
+#hud {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.hud-prefix {
+  text-align: center;
+  font-size: 1rem;
+}
+
+.hud-main-text {
+  text-align: center;
+}
+
+#progressBar {
+  width: 10rem;
+  height: 2rem;
+  border: 0.3rem solid #56a5eb;
+  margin-top: 1rem;
+  margin-bottom: 0;
+}
+
+#progressBarFull {
+  height: 2rem;
+  background-color: #56a5eb;
+  width: 0%;
+}
+
+/* LOADER */
+#loader {
+  border: 1rem solid white;
+  border-radius: 50%;
+  border-top: 1rem solid #56a5eb;
+  width: 7rem;
+  height: 7rem;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

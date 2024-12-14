@@ -1,0 +1,163 @@
+[
+    {
+      "question": "Which of the following is a synonym for the word 'happy'?",
+      "choice1": "Sad",
+      "choice2": "Angry",
+      "choice3": "Joyful",
+      "choice4": "Tired",
+      "answer": 3
+    },
+    {
+      "question": "What is the antonym of the word 'generous'?",
+      "choice1": "Selfish",
+      "choice2": "Kind",
+      "choice3": "Friendly",
+      "choice4": "Grateful",
+      "answer": 1
+    },
+    {
+      "question": "Which of the following sentences is in the passive voice?",
+      "choice1": "She is reading a book.",
+      "choice2": "The book was read by her.",
+      "choice3": "She reads a book every day.",
+      "choice4": "She will read the book tomorrow.",
+      "answer": 2
+    },
+    {
+      "question": "Choose the correct form of the verb: 'She _____ to the store every morning.'",
+      "choice1": "go",
+      "choice2": "goes",
+      "choice3": "gone",
+      "choice4": "going",
+      "answer": 2
+    },
+    {
+      "question": "Which of the following is a compound sentence?",
+      "choice1": "She is tired because she worked all day.",
+      "choice2": "She worked all day and she is tired.",
+      "choice3": "Because she worked all day, she is tired.",
+      "choice4": "Working all day made her tired.",
+      "answer": 2
+    },
+    {
+      "question": "What is the correct past tense of the verb 'run'?",
+      "choice1": "Ran",
+      "choice2": "Runned",
+      "choice3": "Running",
+      "choice4": "Runs",
+      "answer": 1
+    },
+    {
+      "question": "Which of the following is an example of a simile?",
+      "choice1": "She is as brave as a lion.",
+      "choice2": "Time is a thief.",
+      "choice3": "The wind howled in the night.",
+      "choice4": "His heart is a cold iron.",
+      "answer": 1
+    },
+    {
+      "question": "Choose the correct word: 'She completed the task _____.'",
+      "choice1": "quickly",
+      "choice2": "quick",
+      "choice3": "quicker",
+      "choice4": "quickest",
+      "answer": 1
+    },
+    {
+      "question": "Which of the following is a declarative sentence?",
+      "choice1": "What time is it?",
+      "choice2": "Please close the door.",
+      "choice3": "I will go to the store tomorrow.",
+      "choice4": "What a beautiful day!",
+      "answer": 3
+    },
+    {
+      "question": "Which of the following words is a preposition?",
+      "choice1": "Run",
+      "choice2": "Under",
+      "choice3": "Happy",
+      "choice4": "Quickly",
+      "answer": 2
+    },
+    {
+      "question": "What is the correct plural form of the word 'child'?",
+      "choice1": "Childs",
+      "choice2": "Childes",
+      "choice3": "Children",
+      "choice4": "Childrens",
+      "answer": 3
+    },
+    {
+      "question": "Which of the following sentences uses the correct form of 'there', 'their', or 'they're'?",
+      "choice1": "There going to the park.",
+      "choice2": "Their going to the park.",
+      "choice3": "They're going to the park.",
+      "choice4": "Their going to there park.",
+      "answer": 3
+    },
+    {
+      "question": "Which of the following words is a conjunction?",
+      "choice1": "And",
+      "choice2": "He",
+      "choice3": "Very",
+      "choice4": "Quickly",
+      "answer": 1
+    },
+    {
+      "question": "What is the correct form of the verb 'to be' in the sentence: 'I _____ happy'?",
+      "choice1": "am",
+      "choice2": "is",
+      "choice3": "are",
+      "choice4": "be",
+      "answer": 1
+    },
+    {
+      "question": "Which of the following sentences is punctuated correctly?",
+      "choice1": "She said, 'I'll be there soon.'",
+      "choice2": "She said, I'll be there soon.",
+      "choice3": "She said 'I'll be there soon.'",
+      "choice4": "She said I'll be there soon.",
+      "answer": 1
+    },
+    {
+      "question": "What is the comparative form of the adjective 'big'?",
+      "choice1": "Bigger",
+      "choice2": "Biggest",
+      "choice3": "More big",
+      "choice4": "Most big",
+      "answer": 1
+    },
+    {
+      "question": "Which of the following words is an adverb?",
+      "choice1": "Quickly",
+      "choice2": "Quiet",
+      "choice3": "Dog",
+      "choice4": "Blue",
+      "answer": 1
+    },
+    {
+      "question": "Which of the following is an example of a metaphor?",
+      "choice1": "The clouds are fluffy like cotton.",
+      "choice2": "The world is a stage.",
+      "choice3": "She sings like an angel.",
+      "choice4": "He is as strong as an ox.",
+      "answer": 2
+    },
+    {
+      "question": "Which of the following is a pronoun?",
+      "choice1": "She",
+      "choice2": "Walk",
+      "choice3": "Apple",
+      "choice4": "Beautiful",
+      "answer": 1
+    },
+    {
+      "question": "Which of the following is a correct example of a possessive noun?",
+      "choice1": "The cat's toy",
+      "choice2": "The cats toy",
+      "choice3": "The cats's toy",
+      "choice4": "The cat toy",
+      "answer": 1
+    }
+  ]
+  
