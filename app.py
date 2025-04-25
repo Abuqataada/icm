@@ -4,14 +4,23 @@ from flask_login import LoginManager, login_user, login_required, current_user, 
 from models import User, School, Settings, QuizResult, Group, ArchivedSchool, Question
 from flask_socketio import SocketIO, emit, disconnect
 import json
-from sqlalchemy.orm import aliased
-from sqlalchemy import func
+from sqlalchemy.orm import aliased, sessionmaker
+from sqlalchemy import func, create_engine
 from flask_cors import CORS
 import signal
 import os
 from werkzeug.utils import secure_filename
 import random
 import eventlet
+from dotenv import load_dotenv
+
+load_dotenv()
+# Adjust the URI to match your Aiven DB credentials
+AIVEN_DB_URI = os.getenv("ICM_DB_URI")
+
+aiven_engine = create_engine(AIVEN_DB_URI)
+AivenSession = sessionmaker(bind=aiven_engine)
+
 
 CORS(app)
 eventlet.hubs.use_hub('selects')
@@ -598,6 +607,55 @@ def generate_questions_json():
 
     flash(f'{num_questions} quiz questions generated successfully!', 'success')
     return render_template("admin_quiz_session.html")
+
+@app.route('/sync-database', methods=['GET'])
+@login_required
+def sync_database():
+    from extensions import db as local_db
+    try:
+        aiven_session = AivenSession()
+
+        # Get all Aiven schools
+        aiven_schools = aiven_session.query(School).all()
+
+        for a_sch in aiven_schools:
+            # Check if school exists in local DB
+            existing_school = local_db.session.get(School, a_sch.id)
+            if not existing_school:
+                local_school = School(id=a_sch.id, name=a_sch.name, season=a_sch.season)
+                local_db.session.add(local_school)
+
+            for a_group in a_sch.groups:
+                existing_group = local_db.session.get(Group, a_group.id)
+                if not existing_group:
+                    local_group = Group(
+                        id=a_group.id,
+                        name=a_group.name,
+                        passcode=a_group.passcode,
+                        school_id=a_group.school_id,
+                        is_admin=a_group.is_admin
+                    )
+                    local_db.session.add(local_group)
+
+                for a_user in a_group.members:
+                    existing_user = local_db.session.get(User, a_user.id)
+                    if not existing_user:
+                        local_user = User(
+                            id=a_user.id,
+                            fullname=a_user.fullname,
+                            school_id=a_user.school_id,
+                            group_id=a_user.group_id,
+                            is_admin=a_user.is_admin
+                        )
+                        local_db.session.add(local_user)
+
+        local_db.session.commit()
+        flash("New data synced from Aiven to local database successfully!", 'success')
+        return redirect(url_for("admin_panel"))
+
+    except Exception as e:
+        local_db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 

@@ -1,6 +1,8 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 import pymysql
+from flask_migrate import Migrate
+
 import os
 
 app = Flask(__name__)
@@ -18,6 +20,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 pymysql.install_as_MySQLdb()
 
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Create the database tables
 with app.app_context():

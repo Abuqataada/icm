@@ -127,7 +127,8 @@ class QuizResult(db.Model):
     result = db.Column(db.String(50))
     response_time = db.Column(db.Float)
     score = db.Column(db.Float)  # New column to store the calculated score
-    season = db.Column(db.Integer, db.ForeignKey('school.season'), nullable=False)  # Added season column
+    school_id = db.Column(db.Integer, db.ForeignKey('school.id'), nullable=False)  # FIXED
+    season = db.Column(db.Integer)  # just store the value, don’t foreign key it
 
     # Relationship with Group
     group = db.relationship('Group', backref='quiz_results', lazy=True)
