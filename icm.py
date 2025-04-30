@@ -51,14 +51,13 @@ def run_flask():
         messagebox.showerror("Error", f"Failed to start server: {str(e)}")
 
 
-def stop_flask():
+def stop_flask(ip_address):
     global flask_process
     if not flask_process or flask_process.poll() is not None:
         messagebox.showwarning("Warning", "The server is not running!")
         return
 
     try:
-        ip_address = get_local_ip()
         # Send a POST request to the shutdown route
         response = requests.post("http://{ip_address}:5000/shutdown")
         response.raise_for_status()  # Raise an error for bad responses

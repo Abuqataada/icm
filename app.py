@@ -12,12 +12,9 @@ import os
 from werkzeug.utils import secure_filename
 import random
 import eventlet
+import pymysql
 
-# Adjust the URI to match your Aiven DB credentials
-AIVEN_DB_URI = os.getenv("ICM_DB_URI", "sqlite:///users.db")
 
-aiven_engine = create_engine(AIVEN_DB_URI)
-AivenSession = sessionmaker(bind=aiven_engine)
 
 
 CORS(app)
@@ -142,35 +139,61 @@ def home():
 @app.route('/signup', methods=['POST'])
 def signup():
     try:
-        # Fetch the current registration setting
-        current_setting = db.session.query(Settings).filter_by(id=1).first()
-
-        # Check if registration is enabled
-        if not current_setting or not current_setting.allow_registration:
-            return 'Registration has closed for this programme. Please try again later.', 403
-
+        # Get form inputs
         fullname = request.form['fullname'].strip().lower()
         school_id = request.form['school_id']
-        group_id = request.form['group_id']  # Group selection during signup
+        group_id = request.form['group_id']
 
-        # Check if the selected group has less than 4 users
-        group = Group.query.filter_by(id=group_id).first()
-        if len(group.members) >= 4:
-            return 'The selected group already has 4 members. Please select another group.', 400
+        # --- Connect to Aiven DB ---
+        timeout = 10
+        connection = pymysql.connect(
+            charset="utf8mb4",
+            connect_timeout=timeout,
+            cursorclass=pymysql.cursors.DictCursor,
+            db="defaultdb",
+            host=os.getenv("DB_HOST"),
+            password=os.getenv("DB_PASSWORD"),
+            read_timeout=timeout,
+            port=23198,
+            user=os.getenv("DB_USER"),
+            write_timeout=timeout,
+        )
 
-        if school_id == '5':
-            flash('Only a super admin can register another admin. Please select another school!', 'info')
-            return render_template("index.html")
-        # Create new user
-        new_user = User(fullname=fullname, school_id=school_id, group_id=group_id)
+        with connection.cursor() as cursor:
+            # --- Check if registration is allowed from Aiven DB ---
+            cursor.execute("SELECT allow_registration FROM settings WHERE id = 1")
+            setting = cursor.fetchone()
+            if not setting or not setting['allow_registration']:
+                return 'Registration has closed for this programme. Please try again later.', 403
 
-        db.session.add(new_user)
-        db.session.commit()
+            # --- Check group member limit in Aiven DB ---
+            cursor.execute("SELECT COUNT(*) as count FROM user WHERE group_id = %s", (group_id,))
+            member_count = cursor.fetchone()['count']
+            if member_count >= 4:
+                flash('The selected group already has 4 members. Please select another group.', 'info')
+                return render_template("index.html")
 
+            if school_id == '1':
+                flash('Only a super admin can register another admin. Please select another school!', 'info')
+                return render_template("index.html")
+
+            # --- Insert new user into Aiven DB ---
+            cursor.execute("""
+                INSERT INTO user (fullname, school_id, group_id, is_admin)
+                VALUES (%s, %s, %s, %s)
+            """, (fullname, school_id, group_id, 0))
+            connection.commit()
+
+        flash("Registration successful.", "success")
         return render_template("index.html")
+
     except Exception as e:
-        flash(f"Error during signup: {e}")
-        return 'An error occurred during signup. Please try again.', 500
+        flash(f"Error during signup: {e}", "danger")
+        return render_template("index.html")
+
+    finally:
+        if 'connection' in locals():
+            connection.close()
 
 @app.route('/admin', methods=['GET'])
 @login_required
@@ -609,52 +632,66 @@ def generate_questions_json():
 @app.route('/sync-database', methods=['GET'])
 @login_required
 def sync_database():
-    from extensions import db as local_db
+    timeout = 10
     try:
-        aiven_session = AivenSession()
+        connection = pymysql.connect(
+            charset="utf8mb4",
+            connect_timeout=timeout,
+            cursorclass=pymysql.cursors.DictCursor,
+            db="defaultdb",
+            host=os.getenv("DB_HOST"),
+            password=os.getenv("DB_PASSWORD"),
+            read_timeout=timeout,
+            port=23198,
+            user=os.getenv("DB_USER"),
+            write_timeout=timeout,
+        )
 
-        # Get all Aiven schools
-        aiven_schools = aiven_session.query(School).all()
+        with connection.cursor() as cursor:
+            # Fetch schools
+            cursor.execute("SELECT * FROM school")
+            remote_schools = cursor.fetchall()
 
-        for a_sch in aiven_schools:
-            # Check if school exists in local DB
-            existing_school = local_db.session.get(School, a_sch.id)
-            if not existing_school:
-                local_school = School(id=a_sch.id, name=a_sch.name, season=a_sch.season)
-                local_db.session.add(local_school)
+            for rs in remote_schools:
+                if not School.query.filter_by(id=rs['id']).first():
+                    school = School(name=rs['name'], season=rs['season'])  # adjust fields
+                    db.session.add(school)
 
-            for a_group in a_sch.groups:
-                existing_group = local_db.session.get(Group, a_group.id)
-                if not existing_group:
-                    local_group = Group(
-                        id=a_group.id,
-                        name=a_group.name,
-                        passcode=a_group.passcode,
-                        school_id=a_group.school_id,
-                        is_admin=a_group.is_admin
+            # Fetch groups
+            cursor.execute("SELECT * FROM `group`")
+            remote_groups = cursor.fetchall()
+
+            for rg in remote_groups:
+                if not Group.query.filter_by(id=rg['id']).first():
+                    group = Group(is_admin=rg['is_admin'], name=rg['name'], passcode=rg['passcode'], school_id=['school_id'])  # adjust fields
+                    db.session.add(group)
+
+            # Fetch users (students only)
+            cursor.execute("SELECT * FROM user WHERE is_admin = 0")
+            remote_users = cursor.fetchall()
+
+            for ru in remote_users:
+                if not User.query.filter_by(id=ru['id']).first():
+                    user = User(
+                        fullname=ru['fullname'],
+                        school_id=ru['school_id'],
+                        group_id=ru['group_id'],
+                        is_admin=False
                     )
-                    local_db.session.add(local_group)
+                    db.session.add(user)
 
-                for a_user in a_group.members:
-                    existing_user = local_db.session.get(User, a_user.id)
-                    if not existing_user:
-                        local_user = User(
-                            id=a_user.id,
-                            fullname=a_user.fullname,
-                            school_id=a_user.school_id,
-                            group_id=a_user.group_id,
-                            is_admin=a_user.is_admin
-                        )
-                        local_db.session.add(local_user)
-
-        local_db.session.commit()
-        flash("New data synced from Aiven to local database successfully!", 'success')
-        return redirect(url_for("admin_panel"))
+        db.session.commit()
+        flash("Database synced successfully!", "success")
 
     except Exception as e:
-        local_db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        db.session.rollback()
+        flash(f"Error syncing database: {str(e)}", "danger")
+        connection.close()
+    finally:
+        if connection:
+            connection.close()
 
+    return redirect(url_for('admin_panel'))  # or wherever you want
 
 
 
@@ -751,8 +788,6 @@ def load_questions():
         flash("Error decoding JSON from questions file.")
         return []
 
-questions = load_questions()
-
 @socketio.on('connect')
 def handle_connect():
     global admin_socket
@@ -824,6 +859,7 @@ def handle_disconnect():
 @socketio.on('submit_answer')
 def handle_submit_answer(data):
     group_info = connected_clients.get(request.sid)
+    questions = load_questions()  # Load questions from JSON file
 
     if group_info:
         group_id = group_info['group_id']
@@ -900,29 +936,6 @@ def handle_submit_answer(data):
     else:
         flash("Group not found in connected clients.")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @socketio.on('fetch_total_group_results')
 def handle_fetch_total_group_results():
     try:
@@ -958,24 +971,6 @@ def handle_fetch_total_group_results():
         #print('Error fetching total group results:', e)
         emit('message', 'Error fetching total group results.', room=request.sid)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @socketio.on('restart_quiz')
 def handle_restart_quiz():
     global current_question_index
@@ -1009,6 +1004,7 @@ def handle_restart_quiz():
 @socketio.on('next_question')
 def handle_next_question():
     global current_question_index
+    questions = load_questions()  # Load questions from JSON file
 
     try:
         client_info = connected_clients.get(request.sid)
@@ -1059,4 +1055,4 @@ if __name__ == '__main__':
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     print("Starting server with Eventlet...")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=False)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
