@@ -111,7 +111,7 @@ url_label.pack(pady=5)
 run_button = ctk.CTkButton(app, text="Start ICM Server", command=run_flask)
 run_button.pack(pady=10)
 
-stop_button = ctk.CTkButton(app, text="Stop Server", command=stop_flask)
+stop_button = ctk.CTkButton(app, text="Stop Server", command=lambda: stop_flask(ip_address))
 stop_button.pack(pady=10)
 
 exit_button = ctk.CTkButton(app, text="Exit", command=exit_app, fg_color="red", hover_color="darkred", text_color="white")
