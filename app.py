@@ -4,8 +4,8 @@ from flask_login import LoginManager, login_user, login_required, current_user, 
 from models import User, School, Settings, QuizResult, Group, ArchivedSchool, Question
 from flask_socketio import SocketIO, emit, disconnect
 import json
-from sqlalchemy.orm import aliased, sessionmaker
-from sqlalchemy import func, create_engine
+from sqlalchemy.orm import aliased
+from sqlalchemy import func
 from flask_cors import CORS
 import signal
 import os
@@ -353,25 +353,50 @@ def questions_page():
 #####################################################################
 @app.route('/toggle-registration', methods=['POST'])
 def toggle_registration():
-    # Fetch the current setting
-    current_setting = db.session.query(Settings).filter_by(id=1).first()
+    # Connect to Aiven database
+    connection = pymysql.connect(
+        host=os.getenv("DB_HOST"),
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        db="defaultdb",
+        port=23198,
+        charset="utf8mb4",
+        cursorclass=pymysql.cursors.DictCursor
+    )
 
-    # If no setting exists, create a default one
-    if not current_setting:
-        current_setting = Settings(allow_registration=True, allow_quiz=True)  # Set default values
-        db.session.add(current_setting)
-        db.session.commit()
+    allow_registration = True
+    allow_quiz = True
 
-    # Only toggle the allow_registration setting if the request method is POST
-    if request.method == 'POST':
-        current_setting.allow_registration = not current_setting.allow_registration
+    try:
+        with connection.cursor() as cursor:
+            # Fetch the current settings
+            cursor.execute("SELECT * FROM settings WHERE id = 1")
+            setting = cursor.fetchone()
 
-        # Save the updated setting
-        db.session.commit()
+            # If no setting exists, create it
+            if not setting:
+                cursor.execute("INSERT INTO settings (allow_registration, allow_quiz) VALUES (TRUE, TRUE)")
+                connection.commit()
+                setting = {'allow_registration': True, 'allow_quiz': True}
 
-    # Render the template with the current setting
-    return render_template("settings.html", allow_registration=current_setting.allow_registration, allow_quiz=current_setting.allow_quiz)
+            if request.method == 'POST':
+                # Toggle the allow_registration setting
+                new_value = not setting['allow_registration']
+                cursor.execute("UPDATE settings SET allow_registration = %s WHERE id = 1", (new_value,))
+                connection.commit()
+                setting['allow_registration'] = new_value
 
+            allow_registration = setting['allow_registration']
+            allow_quiz = setting['allow_quiz']
+
+    except Exception as e:
+        flash(f"Error while toggling registration: {e}", "danger")
+        return render_template("settings.html", allow_registration=allow_registration, allow_quiz=allow_quiz)
+
+    finally:
+        connection.close()
+
+    return render_template("settings.html", allow_registration=allow_registration, allow_quiz=allow_quiz)
 
 @app.route('/toggle_quiz', methods=['POST'])
 def toggle_quiz():
