@@ -98,7 +98,14 @@ def highscores():
 @app.route('/home', methods=['GET', 'POST'])
 def home():
     # Fetch the current setting
+    # Fetch the current setting
     current_setting = db.session.query(Settings).filter_by(id=1).first()
+
+    # Create a default if not found
+    if not current_setting:
+        current_setting = Settings(id=1, allow_registration=True, allow_quiz=True)
+        db.session.add(current_setting)
+        db.session.commit()
     allow_quiz = current_setting.allow_quiz
 
     school_id = request.form['school_id']
