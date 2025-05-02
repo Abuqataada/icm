@@ -1,4 +1,4 @@
-from flask import request, redirect, url_for, render_template, session, jsonify, flash
+from flask import request, redirect, url_for, render_template, session, jsonify, flash, send_file
 from extensions import db, app
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
 from models import User, School, Settings, QuizResult, Group, ArchivedSchool, Question
@@ -357,7 +357,7 @@ def questions_page():
 
 
 ########################## ADMIN SETTINGS ###########################
-#####################################################################
+#####################################################################    
 @app.route('/toggle-registration', methods=['POST'])
 def toggle_registration():
     # Connect to Aiven database
@@ -777,12 +777,38 @@ def calculate_score(base_score, time_taken, time_limit):
     # Ensure score does not go below zero
     return round(max(0, score), 2)
 
+#export data from DB to txt
+def export_database_to_txt(output_file="database_dump.txt"):
+    with open(output_file, "w", encoding="utf-8") as f:
+        for model in [User, School, Group, Settings]:  # Add all models you want
+            f.write(f"--- {model.__name__} ---\n")
+            records = model.query.all()
+            if not records:
+                f.write("No records found.\n\n")
+                continue
 
+            for record in records:
+                f.write(", ".join(
+                    [f"{k}={v}" for k, v in record.__dict__.items() if not k.startswith("_")]
+                ) + "\n")
+            f.write("\n")
+    return output_file
 
+@app.route("/update-group")
+def update_group():
+    group = Group.query.filter_by(passcode="EEAS5I00").first()
+    if group:
+        group.passcode = "1234ABCD"
+        group.is_admin = True
+        db.session.commit()
+        return "Group updated successfully."
+    return "Group not found."
 
-
-
-
+@app.route("/download-database")
+def download_database():
+    with app.app_context():
+        file_path = export_database_to_txt()
+        return send_file(file_path, as_attachment=True)
 
 
 
