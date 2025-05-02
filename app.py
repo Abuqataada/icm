@@ -444,8 +444,8 @@ def delete_school(id):
             groups = school.archived_groups
             students = school.archived_students
 
-        # Prevent deletion of Admin group (assuming ID 5 is the admin group)
-        if int(school.id) == 5:
+        # Prevent deletion of Admin group
+        if Group.query.filter_by(school_id=school.id).first().is_admin:
             flash(f'Admin group cannot be deleted!', 'danger')
             return redirect(url_for('admin_panel'))
         
@@ -476,7 +476,8 @@ def delete_user(user_id):
         # Fetch the current setting
         user = User.query.get_or_404(user_id)
         try:
-            if int(user.id) == 1:
+            # Prevent deletion of Admin user
+            if user.is_admin:
                 flash(f'You cannot delete a Super Admin!', 'info')
                 return redirect(url_for('settings'))
             
@@ -576,7 +577,7 @@ def archive_school(school_id):
         return redirect(url_for('admin_panel'))
 
     try:
-        if int(school.id) == 5:
+        if Group.query.filter_by(school_id=school.id).first().is_admin:
             flash("You cannot archive Admin School!", "info")
         else:
             school.archive()
