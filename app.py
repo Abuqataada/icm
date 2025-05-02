@@ -118,7 +118,7 @@ def home():
         return render_template("index.html", error='Invalid school ID!')
 
     # Fetch the group that matches the passcode within the specified school
-    group = Group.query.filter_by(school_id=school_id, passcode=group_passcode).first()
+    group = Group.query.filter_by(school_id=school.id, passcode=group_passcode).first()
 
     if group:
         # Get all members of the group
@@ -129,7 +129,7 @@ def home():
 
         # Store the group information in the session
         session['group_id'] = group.id
-        session['school_id'] = school_id
+        session['school_id'] = school.id
 
         # If the group is an admin, redirect to admin.html
         if group.is_admin:
