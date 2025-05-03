@@ -697,6 +697,7 @@ def sync_database(file_path="db_dumps/remote_dump.txt"):
         json.dump(dump, f, indent=4)
 
     print(f"Remote data saved to {file_path}")
+    return send_file(file_path, as_attachment=True)
 
 
 
