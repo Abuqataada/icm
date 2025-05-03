@@ -24,6 +24,8 @@ eventlet.hubs.use_hub('selects')
 socketio = SocketIO(app, async_mode='eventlet')
 admin_socket = None  # Initialize admin_socket globally
 current_question_index = 0
+DUMP_FOLDER = os.path.join(os.getcwd(), "db_dumps")
+os.makedirs(DUMP_FOLDER, exist_ok=True)
 
 
 
@@ -664,68 +666,37 @@ def generate_questions_json():
 
 @app.route('/sync-database', methods=['GET'])
 @login_required
-def sync_database():
+def sync_database(file_path="db_dumps/remote_dump.txt"):
     timeout = 10
-    try:
-        connection = pymysql.connect(
-            charset="utf8mb4",
-            connect_timeout=timeout,
-            cursorclass=pymysql.cursors.DictCursor,
-            db="defaultdb",
-            host=os.getenv("DB_HOST"),
-            password=os.getenv("DB_PASSWORD"),
-            read_timeout=timeout,
-            port=23198,
-            user=os.getenv("DB_USER"),
-            write_timeout=timeout,
-        )
+    connection = pymysql.connect(
+        charset="utf8mb4",
+        connect_timeout=timeout,
+        cursorclass=pymysql.cursors.DictCursor,
+        db="defaultdb",
+        host=os.getenv("DB_HOST"),
+        password=os.getenv("DB_PASSWORD"),
+        read_timeout=timeout,
+        port=23198,
+        user=os.getenv("DB_USER"),
+        write_timeout=timeout,
+    )
 
-        with connection.cursor() as cursor:
-            # Fetch schools
-            cursor.execute("SELECT * FROM school")
-            remote_schools = cursor.fetchall()
+    with connection.cursor() as cursor:
+        dump = {}
 
-            for rs in remote_schools:
-                if not School.query.filter_by(id=rs['id']).first():
-                    school = School(name=rs['name'], season=rs['season'])  # adjust fields
-                    db.session.add(school)
+        cursor.execute("SELECT * FROM school")
+        dump['schools'] = cursor.fetchall()
 
-            # Fetch groups
-            cursor.execute("SELECT * FROM `group`")
-            remote_groups = cursor.fetchall()
+        cursor.execute("SELECT * FROM `group`")
+        dump['groups'] = cursor.fetchall()
 
-            for rg in remote_groups:
-                if not Group.query.filter_by(id=rg['id']).first():
-                    group = Group(is_admin=rg['is_admin'], name=rg['name'], passcode=rg['passcode'], school_id=['school_id'])  # adjust fields
-                    db.session.add(group)
+        cursor.execute("SELECT * FROM user WHERE is_admin = 0")
+        dump['users'] = cursor.fetchall()
 
-            # Fetch users (students only)
-            cursor.execute("SELECT * FROM user WHERE is_admin = 0")
-            remote_users = cursor.fetchall()
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(dump, f, indent=4)
 
-            for ru in remote_users:
-                if not User.query.filter_by(id=ru['id']).first():
-                    user = User(
-                        fullname=ru['fullname'],
-                        school_id=ru['school_id'],
-                        group_id=ru['group_id'],
-                        is_admin=False
-                    )
-                    db.session.add(user)
-
-        db.session.commit()
-        flash("Database synced successfully!", "success")
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error syncing database: {str(e)}", "danger")
-        connection.close()
-    finally:
-        if connection:
-            connection.close()
-
-    return redirect(url_for('admin_panel'))  # or wherever you want
-
+    print(f"Remote data saved to {file_path}")
 
 
 
@@ -781,7 +752,7 @@ def calculate_score(base_score, time_taken, time_limit):
 #export data from DB to txt
 def export_database_to_txt(output_file="database_dump.txt"):
     with open(output_file, "w", encoding="utf-8") as f:
-        for model in [User, School, Group, Settings]:  # Add all models you want
+        for model in [User, School, Group]:  # Add all models you want
             f.write(f"--- {model.__name__} ---\n")
             records = model.query.all()
             if not records:

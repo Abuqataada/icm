@@ -5,10 +5,49 @@ import socket
 import app
 import threading
 import customtkinter as ctk
+import os
+import json
+from models import db, School, Group, User
 
 
 # Global variable to store the Flask process
 flask_process = None
+
+def load_txt_and_sync_to_sqlite(file_path="db_dumps/remote_dump.txt"):
+    if not os.path.exists(file_path):
+        print("Dump file not found.")
+        return
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Make sure tables are created
+    db.create_all()
+
+    # Sync schools
+    for s in data.get("schools", []):
+        if not School.query.filter_by(id=s['id']).first():
+            db.session.add(School(id=s['id'], name=s['name'], season=s['season']))
+
+    # Sync groups
+    for g in data.get("groups", []):
+        if not Group.query.filter_by(id=g['id']).first():
+            db.session.add(Group(
+                id=g['id'], name=g['name'], passcode=g['passcode'],
+                is_admin=g['is_admin'], school_id=g['school_id']
+            ))
+
+    # Sync users
+    for u in data.get("users", []):
+        if not User.query.filter_by(id=u['id']).first():
+            db.session.add(User(
+                id=u['id'], fullname=u['fullname'],
+                school_id=u['school_id'], group_id=u['group_id'],
+                is_admin=False
+            ))
+
+    db.session.commit()
+    print("Data synced to local DB.")
 
 
 def get_local_ip():
@@ -22,6 +61,7 @@ def get_local_ip():
 
 
 def run_flask():
+    load_txt_and_sync_to_sqlite()
     global flask_process
     if flask_process and flask_process.poll() is None:
         messagebox.showwarning("Warning", "The server is already running!")
