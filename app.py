@@ -690,7 +690,7 @@ def sync_database(file_path="db_dumps/remote_dump.txt"):
         cursor.execute("SELECT * FROM `group`")
         dump['groups'] = cursor.fetchall()
 
-        cursor.execute("SELECT * FROM user WHERE is_admin = 0")
+        cursor.execute("SELECT * FROM user")
         dump['users'] = cursor.fetchall()
 
     with open(file_path, "w", encoding="utf-8") as f:
