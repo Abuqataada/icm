@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 # Define the User model
 class User(db.Model, UserMixin):
-    __tablename__ = 'user'
+    __tablename__ = '"user"'
     id = db.Column(db.Integer, primary_key=True)
     fullname = db.Column(db.String(150), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
@@ -93,7 +93,7 @@ class ArchivedGroup(db.Model):
 
 # Define the Group model
 class Group(db.Model, UserMixin):
-    __tablename__ = 'group'
+    __tablename__ = 'user_group'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)  # Field to identify admin groups

@@ -39,9 +39,13 @@
             <i class="lni lni-popup"></i>
             <span>Upload questions</span>
         </a>
-        <a href="{{ url_for('sync_database') }}" class="sidebar-link">
-            <i class="lni lni-popup"></i>
-            <span>Sync Database</span>
+        <a href="{{ url_for('download_data') }}" class="sidebar-link">
+            <i class="lni lni-download"></i>
+            <span>Download Data</span>
+        </a>
+        <a href="{{ url_for('upload_data') }}" class="sidebar-link">
+            <i class="lni lni-upload"></i>
+            <span>Upload Data</span>
         </a>
         <a href="{{ url_for('settings') }}" class="sidebar-link">
             <i class="lni lni-cog"></i>

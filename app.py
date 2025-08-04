@@ -12,7 +12,11 @@ import os
 from werkzeug.utils import secure_filename
 import random
 import eventlet
-import pymysql
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import pandas as pd
+from datetime import datetime
+import traceback
 
 
 
@@ -147,62 +151,47 @@ def home():
 
 @app.route('/signup', methods=['POST'])
 def signup():
+    # Get form inputs
+    fullname = request.form.get('fullname', '').strip().lower()
+    school_id = request.form.get('school_id')
+    group_id = request.form.get('group_id')
+    
+    # Validate required fields
+    if not all([fullname, school_id, group_id]):
+        flash("Please fill in all required fields", "danger")
+        return render_template("index.html")
+    
     try:
-        # Get form inputs
-        fullname = request.form['fullname'].strip().lower()
-        school_id = request.form['school_id']
-        group_id = request.form['group_id']
-
-        # --- Connect to Aiven DB ---
-        timeout = 10
-        connection = pymysql.connect(
-            charset="utf8mb4",
-            connect_timeout=timeout,
-            cursorclass=pymysql.cursors.DictCursor,
-            db="defaultdb",
-            host=os.getenv("DB_HOST"),
-            password=os.getenv("DB_PASSWORD"),
-            read_timeout=timeout,
-            port=23198,
-            user=os.getenv("DB_USER"),
-            write_timeout=timeout,
+        # Check registration status from settings
+        registration_setting = Settings.query.get(1)
+        if not registration_setting or not registration_setting.allow_registration:
+            return 'Registration has closed for this programme. Please try again later.', 403
+        
+        # Check group capacity (max 4 members)
+        group_member_count = User.query.filter_by(group_id=group_id).count()
+        if group_member_count >= 4:
+            flash('The selected group already has 4 members. Please select another group.', 'info')
+            return render_template("index.html")
+        
+        # Create new user (non-admin by default)
+        new_user = User(
+            fullname=fullname,
+            school_id=school_id,
+            group_id=group_id,
+            is_admin=False  # Default to False, admin status should be set separately
         )
-
-        with connection.cursor() as cursor:
-            # --- Check if registration is allowed from Aiven DB ---
-            cursor.execute("SELECT allow_registration FROM settings WHERE id = 1")
-            setting = cursor.fetchone()
-            if not setting or not setting['allow_registration']:
-                return 'Registration has closed for this programme. Please try again later.', 403
-
-            # --- Check group member limit in Aiven DB ---
-            cursor.execute("SELECT COUNT(*) as count FROM user WHERE group_id = %s", (group_id,))
-            member_count = cursor.fetchone()['count']
-            if member_count >= 4:
-                flash('The selected group already has 4 members. Please select another group.', 'info')
-                return render_template("index.html")
-
-            if school_id == '1':
-                flash('Only a super admin can register another admin. Please select another school!', 'info')
-                return render_template("index.html")
-
-            # --- Insert new user into Aiven DB ---
-            cursor.execute("""
-                INSERT INTO user (fullname, school_id, group_id, is_admin)
-                VALUES (%s, %s, %s, %s)
-            """, (fullname, school_id, group_id, 0))
-            connection.commit()
-
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
         flash("Registration successful.", "success")
         return render_template("index.html")
-
+        
     except Exception as e:
-        flash(f"Error during signup: {e}", "danger")
+        db.session.rollback()
+        flash(f"Error during signup: {str(e)}", "danger")
         return render_template("index.html")
-
-    finally:
-        if 'connection' in locals():
-            connection.close()
+    
 
 @app.route('/admin', methods=['GET'])
 @login_required
@@ -359,55 +348,40 @@ def questions_page():
 
 
 ########################## ADMIN SETTINGS ###########################
-#####################################################################    
+#####################################################################
 @app.route('/toggle-registration', methods=['POST'])
+@login_required  # Add this decorator to protect the endpoint
 def toggle_registration():
-    # Connect to Aiven database
-    connection = pymysql.connect(
-        host=os.getenv("DB_HOST"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        db="defaultdb",
-        port=23198,
-        charset="utf8mb4",
-        cursorclass=pymysql.cursors.DictCursor
-    )
-
-    allow_registration = True
-    allow_quiz = True
+    if not current_user.is_admin:
+        flash("Unauthorized: Only admins can modify settings", "danger")
+        return redirect(url_for('index'))
 
     try:
-        with connection.cursor() as cursor:
-            # Fetch the current settings
-            cursor.execute("SELECT * FROM settings WHERE id = 1")
-            setting = cursor.fetchone()
+        # Get or create settings record
+        settings = Settings.query.get(1)
+        if not settings:
+            settings = Settings(
+                id=1,
+                allow_registration=True,
+                allow_quiz=True
+            )
+            db.session.add(settings)
+            db.session.commit()
 
-            # If no setting exists, create it
-            if not setting:
-                cursor.execute("INSERT INTO settings (allow_registration, allow_quiz) VALUES (TRUE, TRUE)")
-                connection.commit()
-                setting = {'allow_registration': True, 'allow_quiz': True}
+        # Toggle the registration setting
+        settings.allow_registration = not settings.allow_registration
+        db.session.commit()
 
-            if request.method == 'POST':
-                # Toggle the allow_registration setting
-                new_value = not setting['allow_registration']
-                cursor.execute("UPDATE settings SET allow_registration = %s WHERE id = 1", (new_value,))
-                connection.commit()
-                setting['allow_registration'] = new_value
-
-            allow_registration = setting['allow_registration']
-            allow_quiz = setting['allow_quiz']
+        flash(f"Registration is now {'open' if settings.allow_registration else 'closed'}", "success")
+        return redirect(url_for('settings'))
 
     except Exception as e:
-        flash(f"Error while toggling registration: {e}", "danger")
-        return render_template("settings.html", allow_registration=allow_registration, allow_quiz=allow_quiz)
-
-    finally:
-        connection.close()
-
-    return render_template("settings.html", allow_registration=allow_registration, allow_quiz=allow_quiz)
-
+        db.session.rollback()
+        flash(f"Error while toggling registration: {str(e)}", "danger")
+        return redirect(url_for('settings'))
+    
 @app.route('/toggle_quiz', methods=['POST'])
+@login_required  # Ensure only logged-in users can access this route
 def toggle_quiz():
     # Fetch the current setting
     current_setting = db.session.query(Settings).filter_by(id=1).first()
@@ -514,16 +488,34 @@ def add_school():
 
         db.session.commit()  # Commit groups to the database
 
+        flash(f"School '{school_name}' and groups added successfully.", 'success')
         return redirect(url_for('settings'))
     except Exception as e:
         flash(f"Error adding school and groups: {e}")
-        return 'An error occurred while adding the school and groups.', 500
+        print(f"Error adding school and groups: {e}")
+        return redirect(url_for('settings'))
 
-@app.route('/get-schools')
-def get_schools():
-    schools = School.query.all()
-    schools_list = [{'id': school.id, 'name': school.name} for school in schools]
-    return jsonify({'schools': schools_list})
+# For login (includes all schools)
+@app.route('/get-all-schools')
+def get_all_schools():
+    try:
+        schools = School.query.all()
+        return jsonify({
+            'schools': [{'id': school.id, 'name': school.name} for school in schools]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# For signup (excludes admin school)
+@app.route('/get-regular-schools')
+def get_regular_schools():
+    try:
+        schools = School.query.filter(School.id != 1).all()  # Exclude school with id=1
+        return jsonify({
+            'schools': [{'id': school.id, 'name': school.name} for school in schools]
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/get_groups/<int:school_id>', methods=['GET'])
 def get_groups(school_id):
@@ -664,45 +656,194 @@ def generate_questions_json():
     flash(f'{num_questions} quiz questions generated successfully!', 'success')
     return render_template("admin_quiz_session.html")
 
-@app.route('/sync-database', methods=['GET'])
+
+@app.route('/download-data')
 @login_required
-def sync_database(file_path="db_dumps/remote_dump.txt"):
-    timeout = 10
-    connection = pymysql.connect(
-        charset="utf8mb4",
-        connect_timeout=timeout,
-        cursorclass=pymysql.cursors.DictCursor,
-        db="defaultdb",
-        host=os.getenv("DB_HOST"),
-        password=os.getenv("DB_PASSWORD"),
-        read_timeout=timeout,
-        port=23198,
-        user=os.getenv("DB_USER"),
-        write_timeout=timeout,
-    )
+def download_data():
+    """Show download confirmation page with preview of incoming data"""
+    try:
+        remote_engine = create_engine(app.config['SQLALCHEMY_BINDS']['remote'])
+        
+        preview_data = {}
+        
+        with remote_engine.connect() as conn:
+            # Get counts of records that will be downloaded
+            tables = ['school', 'user_group', 'user']
 
-    with connection.cursor() as cursor:
-        dump = {}
+            for table in tables:
+                count = pd.read_sql(f"SELECT COUNT(*) FROM {table}", conn).iloc[0,0]
+                
+                # For school table, exclude admin school (id=1)
+                if table == 'school':
+                    count = pd.read_sql(
+                        "SELECT COUNT(*) FROM school WHERE id != 1", 
+                        conn
+                    ).iloc[0,0]
+                
+                # Get sample records (first 3)
+                sample = pd.read_sql(
+                    f"SELECT * FROM {table} {'WHERE id != 1' if table == 'school' else ''} LIMIT 3",
+                    conn
+                ).to_dict('records')
+                
+                preview_data[table] = {
+                    'count': count,
+                    'sample': sample
+                }
+        
+        return render_template(
+            'download_confirmation.html',
+            preview_data=preview_data
+        )
+        
+    except Exception as e:
+        print(f"Error fetching preview data: {str(e)}")
+        flash(f"Could not fetch preview data: {str(e)}", "danger")
+        return redirect(url_for('admin_panel'))
+    
 
-        cursor.execute("SELECT * FROM school")
-        dump['schools'] = cursor.fetchall()
+@app.route('/process-download', methods=['POST'])
+@login_required
+def process_download():
+    """Handle the actual data download from remote to local"""
+    try:
+        # Create database connections
+        remote_engine = create_engine(app.config['SQLALCHEMY_BINDS']['remote'])
+        local_engine = create_engine(app.config['SQLALCHEMY_BINDS']['local'])
+        
+        # Tables needed for offline quiz
+        tables = ['school', 'group', 'user', 'quiz', 'questions']
+        
+        results = {}
+        
+        with remote_engine.connect() as remote_conn, local_engine.connect() as local_conn:
+            for table in tables:
+                try:
+                    # Read from remote
+                    df = pd.read_sql_table(table, remote_conn)
+                    
+                    if df.empty:
+                        results[table] = {'status': 'skipped', 'reason': 'empty'}
+                        continue
+                        
+                    # Special handling for school table (preserve admin school)
+                    if table == 'school':
+                        # Delete all schools except admin (id=1) from local
+                        local_conn.execute(f"DELETE FROM {table} WHERE id != 1")
+                        # Filter out admin school from download
+                        df = df[df['id'] != 1]
+                    else:
+                        # Clear local table completely
+                        local_conn.execute(f"DELETE FROM {table}")
+                    
+                    # Write to local SQLite in instance folder
+                    if not df.empty:
+                        df.to_sql(
+                            table,
+                            local_conn,
+                            if_exists='append',
+                            index=False,
+                            method='multi'
+                        )
+                    
+                    results[table] = {
+                        'status': 'success',
+                        'rows': len(df)
+                    }
+                    
+                except Exception as e:
+                    results[table] = {
+                        'status': 'failed',
+                        'error': str(e)
+                    }
+                    continue
+        
+        # Prepare success message
+        success_tables = [t for t in results if results[t]['status'] == 'success']
+        failed_tables = [t for t in results if results[t]['status'] == 'failed']
+        
+        if failed_tables:
+            flash(
+                f"Download completed with {len(success_tables)} successful tables. "
+                f"Failed tables: {', '.join(failed_tables)}",
+                "warning"
+            )
+        else:
+            flash(
+                f"Successfully downloaded {len(success_tables)} tables",
+                "success"
+            )
+            
+        return redirect(url_for('admin_panel'))
+        
+    except Exception as e:
+        flash(f"Download failed: {str(e)}", "danger")
+        return redirect(url_for('admin_panel'))
 
-        cursor.execute("SELECT * FROM `group`")
-        dump['groups'] = cursor.fetchall()
-
-        cursor.execute("SELECT * FROM user")
-        dump['users'] = cursor.fetchall()
-
-    with open(file_path, "w", encoding="utf-8") as f:
-        json.dump(dump, f, indent=4)
-
-    print(f"Remote data saved to {file_path}")
-    return send_file(file_path, as_attachment=True)
 
 
+@app.route('/upload-data')
+@login_required
+def upload_data():
+    """Show upload confirmation page with stats"""
+    try:
+        # Connect to local SQLite database in instance folder
+        local_engine = create_engine(app.config['SQLALCHEMY_BINDS']['local'])
+        
+        with local_engine.connect() as conn:
+            # Count new schools available for upload
+            new_schools_count = pd.read_sql(
+                "SELECT COUNT(*) FROM school WHERE id != 1 AND NOT EXISTS ("
+                "SELECT 1 FROM remote.school WHERE remote.school.id = school.id"
+                ")", 
+                conn
+            ).iloc[0,0]
+            
+        return render_template(
+            'upload_confirmation.html',
+            new_schools_count=new_schools_count
+        )
+        
+    except Exception as e:
+        flash(f"Could not check upload data: {str(e)}", "danger")
+        return redirect(url_for('admin_panel'))
 
-
-
+@app.route('/process-upload', methods=['POST'])
+@login_required
+def process_upload():
+    """Handle the actual data upload"""
+    try:
+        # Create engines using the binds configuration
+        local_engine = create_engine(app.config['SQLALCHEMY_BINDS']['local'])
+        remote_engine = create_engine(app.config['SQLALCHEMY_BINDS']['remote'])
+        
+        with local_engine.connect() as local_conn, remote_engine.connect() as remote_conn:
+            # Get only new schools that don't exist in remote
+            new_schools = pd.read_sql(
+                "SELECT * FROM school WHERE id != 1 AND NOT EXISTS ("
+                "SELECT 1 FROM remote.school WHERE remote.school.id = school.id"
+                ")",
+                local_conn
+            )
+            
+            if new_schools.empty:
+                flash("No new schools to upload", "info")
+                return redirect(url_for('admin_panel'))
+            
+            # Upload to remote
+            new_schools.to_sql(
+                'school',
+                remote_conn,
+                if_exists='append',
+                index=False
+            )
+            
+            flash(f"Successfully uploaded {len(new_schools)} new school(s)", "success")
+            return redirect(url_for('admin_panel'))
+            
+    except Exception as e:
+        flash(f"Upload failed: {str(e)}", "danger")
+        return redirect(url_for('admin_panel'))
 
 
 
@@ -1086,4 +1227,4 @@ if __name__ == '__main__':
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     print("Starting server with Eventlet...")
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    socketio.run(app, debug=True)

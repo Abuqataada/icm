@@ -17,21 +17,57 @@ with app.app_context():
     print('Admin Group and School user created successfully!')
 """
 # Adding admin user(s)
-from models import User
-# Create a new admin user
+from models import User, School, Group
+def create_default_admin():
+    """Create a default admin user with required school and group relationships"""
+    try:
+        # Check if any admin exists
+        if User.query.filter_by(is_admin=True).first():
+            print("Admin user already exists")
+            return False
+
+        # First ensure the required school exists
+        admin_school = School.query.get(1)
+        if not admin_school:
+            admin_school = School(
+                id=1,
+                name="System Administration",
+                # Add other required school fields
+            )
+            db.session.add(admin_school)
+            db.session.flush()  # Ensure school gets an ID
+
+        # Create default admin group if needed
+        admin_group = Group.query.filter_by(is_admin=True).first()
+        if not admin_group:
+            admin_group = Group(
+                name="Administrators",
+                school_id=1,
+                is_admin=True
+            )
+            db.session.add(admin_group)
+            db.session.flush()
+
+        # Now create the admin user
+        default_admin = User(
+            fullname="System Administrator",
+            school_id=1,
+            group_id=admin_group.id,
+            is_admin=True
+        )
+        
+        db.session.add(default_admin)
+        db.session.commit()
+        print("✅ Default admin user created successfully")
+        return True
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Error creating default admin: {str(e)}")
+        return False
+    
 with app.app_context():
-    admin = User(
-        fullname='Super Admin',
-        is_admin=True,
-        school_id=1,
-        group_id=1
-    )
-
-    # Add and commit to the database
-    db.session.add(admin)
-    db.session.commit()
-
-    print('Admin user created successfully!')
+    create_default_admin()
 
 
 
