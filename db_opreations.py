@@ -17,17 +17,17 @@ with app.app_context():
     print('Admin Group and School user created successfully!')
 """
 # Adding admin user(s)
-from models import User, School, Group
+"""from models import Users, School, UserGroup
 def create_default_admin():
-    """Create a default admin user with required school and group relationships"""
+    "Create a default admin user with required school and group relationships"
     try:
         # Check if any admin exists
-        if User.query.filter_by(is_admin=True).first():
+        if Users.query.filter_by(is_admin=True).first():
             print("Admin user already exists")
             return False
 
         # First ensure the required school exists
-        admin_school = School.query.get(1)
+        admin_school = db.session.get(School, 1)
         if not admin_school:
             admin_school = School(
                 id=1,
@@ -38,9 +38,9 @@ def create_default_admin():
             db.session.flush()  # Ensure school gets an ID
 
         # Create default admin group if needed
-        admin_group = Group.query.filter_by(is_admin=True).first()
+        admin_group = UserGroup.query.filter_by(is_admin=True).first()
         if not admin_group:
-            admin_group = Group(
+            admin_group = UserGroup(
                 name="Administrators",
                 school_id=1,
                 is_admin=True
@@ -49,7 +49,7 @@ def create_default_admin():
             db.session.flush()
 
         # Now create the admin user
-        default_admin = User(
+        default_admin = Users(
             fullname="System Administrator",
             school_id=1,
             group_id=admin_group.id,
@@ -67,7 +67,7 @@ def create_default_admin():
         return False
     
 with app.app_context():
-    create_default_admin()
+    create_default_admin()"""
 
 
 
@@ -202,17 +202,17 @@ with app.app_context():
 
 
 # Adding the is_admin column to the group model
-"""from sqlalchemy import text
+from sqlalchemy import text
 
 with app.app_context():
     # Step 1: Add the `is_admin` column with a default value of False
-    db.session.execute(text('ALTER TABLE "group" ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;'))
+    db.session.execute(text('ALTER TABLE "question" ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;'))
     db.session.commit()
 
     # Step 2: Verify the updated schema to ensure `is_admin` column was added
-    group_columns = db.session.execute(text('PRAGMA table_info("group");')).fetchall()
+    group_columns = db.session.execute(text('PRAGMA table_info("user_group");')).fetchall()
     for column in group_columns:
-        print(column)  # This will print all columns in the updated `group` table, including `is_admin`"""
+        print(column)  # This will print all columns in the updated `group` table, including `is_admin`
 
 
 

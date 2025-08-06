@@ -1,256 +1,180 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>ICM MATH CLICKATHON - Admin</title>
-    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/flashmsg.css') }}">
+{% extends "base.html" %}
 
-  
-  </head>
-  <body>
-    <div id="mySidebar" class="sidebar">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()"><i class="lni lni-arrow-left-circle"></i></a>
-        <div class="d-flex">
-            <div class="sidebar-logo">
-                <a href="#">ICM MATH CLICKATHON</a>
-            </div>
+{% block title %}Add Questions - Admin{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Add New Question</h2>
+            <small>Current Configuration: Season {{ current_season }} - {{ current_subject }}</small>
         </div>
-        <br><br><hr>
-        <a href="{{ url_for('admin_panel') }}" class="sidebar-link">
-            <i class="lni lni-user"></i>
-            <span>Profile</span>
-        </a>
-        <a href="{{ url_for('archive') }}" class="sidebar-link">
-            <i class="lni lni-agenda"></i>
-            <span>Archive</span>
-        </a>
-        <a href="{{ url_for('admin_start_quiz') }}" class="sidebar-link collapsed has-dropdown"
-                      data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
-                      <i class="lni lni-protection"></i>
-                      <span>Start Quiz session</span>
-        </a>
-        <a href="{{ url_for('questions_page') }}" class="sidebar-link">
-            <i class="lni lni-popup"></i>
-            <span>Upload questions</span>
-        </a>
-        <a href="{{ url_for('sync_database') }}" class="sidebar-link">
-            <i class="lni lni-popup"></i>
-            <span>Sync Database</span>
-        </a>
-        <a href="{{ url_for('settings') }}" class="sidebar-link">
-            <i class="lni lni-cog"></i>
-            <span>Setting</span>
-        </a>
-        <a href="{{ url_for('logout') }}" class="sidebar-link">
-            <i class="lni lni-exit"></i>
-            <span>Logout</span>
-        </a>
-    </div>
-      
-    <div id="main">
-        <button class="openbtn" onclick="openNav()"><i class="lni lni-arrow-right-circle"></i></button>
-        <div class="container">
-            <div id="home" class="flex-center flex-column">
-                <h1 class="text-center">Add Questions</h1>
-                <hr>
-                <!-- Flash message div -->
-                <div>
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="flash {{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                </div>
-                
-                <form action="{{ url_for('add_question') }}" method="POST" enctype="multipart/form-data">
-                    <label for="question_text">Question:</label>
-                    <div class="toolbardiv">
-                        <!-- Toolbar -->
-                        <div id="toolbar">
-                            <button class="toolbar" onclick="insertPower()">xⁿ</button>
-                            <button class="toolbar" onclick="insertSubscript()">xₙ</button>
-                            <button class="toolbar" onclick="insertNthRoot()">ⁿ√</button>
-                        </div>
-                        
-                        <!-- Content-editable Text Field -->
-                        <div id="textField" name="question" contenteditable="true" placeholder="Type here..." required></div>
+        
+        <div class="card-body">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="mb-4">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
                     </div>
-                    <input type="hidden" id="question_text" name="question_text"><br><br>
-                
-                    <label for="option_a">Option A:</label>
-                    <input type="text" name="option_a" id="option_a" required><br><br>
-                
-                    <label for="option_b">Option B:</label>
-                    <input type="text" name="option_b" id="option_b" required><br><br>
-                
-                    <label for="option_c">Option C:</label>
-                    <input type="text" name="option_c" id="option_c" required><br><br>
-                
-                    <label for="option_d">Option D:</label>
-                    <input type="text" name="option_d" id="option_d" required><br><br>
-                
-                    <label for="correct_answer">Correct Answer:</label>
-                    <select name="correct_answer" id="correct_answer" required>
-                        <option value="1">A</option>
-                        <option value="2">B</option>
-                        <option value="3">C</option>
-                        <option value="4">D</option>
-                    </select>
-                    <br><br>
-                
-                    <label for="image">Image (optional):</label>
-                    <input type="file" name="image" id="image"><br><br>
-                
-                    <button class="btn btn-success" type="submit">Add Question</button>
-                </form>                
-            </div>
+                {% endif %}
+            {% endwith %}
+
+            <form id="questionForm" action="{{ url_for('add_question') }}" method="POST" enctype="multipart/form-data" novalidate>
+                <!-- Question Text Field -->
+                <div class="mb-4">
+                    <label for="question_text" class="form-label fw-bold">Question Text</label>
+                    <div class="card" id="TextFieldCard">
+                        <div class="card-header bg-light">
+                            <div id="toolbar" class="d-flex flex-wrap gap-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertAtCursor('power')">
+                                    <i class="lni lni-superscript"></i> Superscript
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertAtCursor('subscript')">
+                                    <i class="lni lni-subscript"></i> Subscript
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertAtCursor('root')">
+                                    <i class="lni lni-math"></i> Root
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <textarea id="question_text" name="question_text" class="form-control p-3" 
+                                      style="min-height: 120px;" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-text">Use the toolbar for mathematical notations</div>
+                </div>
+
+                <!-- Options Section -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label for="option_a" class="form-label fw-bold">Option A</label>
+                        <input type="text" class="form-control" id="option_a" name="option_a" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="option_b" class="form-label fw-bold">Option B</label>
+                        <input type="text" class="form-control" id="option_b" name="option_b" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="option_c" class="form-label fw-bold">Option C</label>
+                        <input type="text" class="form-control" id="option_c" name="option_c" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="option_d" class="form-label fw-bold">Option D</label>
+                        <input type="text" class="form-control" id="option_d" name="option_d" required>
+                    </div>
+                </div>
+
+                <!-- Correct Answer and Image Upload -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label for="correct_answer" class="form-label fw-bold">Correct Answer</label>
+                        <select class="form-select" id="correct_answer" name="correct_answer" required>
+                            <option value="" selected disabled>Select correct option</option>
+                            <option value="1">Option A</option>
+                            <option value="2">Option B</option>
+                            <option value="3">Option C</option>
+                            <option value="4">Option D</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="image" class="form-label fw-bold">Question Image (Optional)</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        <div class="form-text">Max 4MB (PNG, JPG, JPEG, GIF)</div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{{ url_for('questions_page') }}" class="btn btn-outline-secondary">
+                        <i class="lni lni-arrow-left"></i> Back to Questions
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="lni lni-save"></i> Save Question
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-    
-    
-    
-    
+</div>
+{% endblock %}
 
+{% block scripts %}
+<script>
+    // Math Notation Helper Functions
+    function toSuperscript(num) {
+        const map = {"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+        return num.toString().split('').map(d => map[d] || d).join('');
+    }
 
-    <script>
-        function openNav() {
-            document.getElementById("mySidebar").style.width = "250px";
-            document.getElementById("main").style.marginLeft = "250px";
-            document.querySelector(".openbtn").style.display = "none"; // Hide the button
-          }
-          
-          function closeNav() {
-            document.getElementById("mySidebar").style.width = "0";
-            document.getElementById("main").style.marginLeft= "0";
-            document.querySelector(".openbtn").style.display = "inline-block"; // Show the button
-          }
+    function toSubscript(num) {
+        const map = {"0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉"};
+        return num.toString().split('').map(d => map[d] || d).join('');
+    }
 
-          window.onload = function() {
-            setTimeout(function() {
-                var flashes = document.getElementsByClassName('flash');
-                for (var i = 0; i < flashes.length; i++) {
-                    flashes[i].style.opacity = '0';
-                    setTimeout(function(flash) {
-                        flash.style.display = 'none';
-                    }, 500, flashes[i]); // Adjust the time to match the transition duration
+    // Main insertion function
+    function insertAtCursor(type) {
+        const textarea = document.getElementById('question_text');
+        const startPos = textarea.selectionStart;
+        const endPos = textarea.selectionEnd;
+        const currentValue = textarea.value;
+        
+        let insertText = '';
+        let promptText = '';
+        
+        switch(type) {
+            case 'power':
+                promptText = "Enter the exponent (e.g., 2 for x²):";
+                const power = prompt(promptText);
+                if (power) insertText = toSuperscript(power);
+                break;
+                
+            case 'subscript':
+                promptText = "Enter the subscript (e.g., 2 for x₂):";
+                const subscript = prompt(promptText);
+                if (subscript) insertText = toSubscript(subscript);
+                break;
+                
+            case 'root':
+                promptText = "Enter the root index (e.g., 3 for cube root):";
+                const nth = prompt(promptText);
+                if (nth) {
+                    if (isNaN(nth) || nth < 2) {
+                        alert("Please enter a valid number ≥ 2");
+                        return;
+                    }
+                    insertText = nth == 2 ? '√' : `${toSuperscript(nth)}√`;
                 }
-            }, 3000); // Adjust the duration the flash message should be visible (in milliseconds)
-            };
+                break;
+        }
+        
+        if (insertText) {
+            textarea.value = currentValue.substring(0, startPos) + 
+                            insertText + 
+                            currentValue.substring(endPos);
+            
+            // Set cursor position after inserted text
+            const newPos = startPos + insertText.length;
+            textarea.setSelectionRange(newPos, newPos);
+            textarea.focus();
+        }
+    }
 
-        // Function to insert a power (superscript)
-        function insertPower() {
-            const power = prompt("Enter the power (e.g., 2 for x²):");
-            if (power) {
-            const superscript = toSuperscript(power);
-            insertText(superscript);
+    // Handle flash messages
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const flashes = document.getElementsByClassName('alert');
+            for (let flash of flashes) {
+                flash.style.opacity = '0';
+                setTimeout(() => flash.remove(), 500);
             }
-        }
-
-        const form = document.querySelector('form');
-        const textField = document.getElementById('textField');
-        const questionText = document.getElementById('question_text');
-
-        form.addEventListener('submit', function () {
-            questionText.value = textField.innerHTML; // Copy content with formatting
-        });
-
-        // Function to insert a subscript
-        function insertSubscript() {
-            const subscript = prompt("Enter the subscript (e.g., 2 for x₂):");
-            if (subscript) {
-            const subscriptText = toSubscript(subscript);
-            insertText(subscriptText);
-            }
-        }
-
-        // Function to insert an nth root
-        function insertNthRoot() {
-            const nth = prompt("Enter the root index (e.g., 4 for 4th root):");
-
-            if (!nth || isNaN(nth) || nth < 2) {
-                alert("Please enter a valid number greater than or equal to 2.");
-                return;
-            }
-
-            let nthRoot;
-            if (nth == 2) {
-                nthRoot = `√`; // Square root
-            } else {
-                const nthSuperscript = toSuperscript(nth); // Convert nth to superscript
-                nthRoot = `${nthSuperscript}√`; // nth root with superscript
-            }
-
-            insertText(nthRoot);
-        }
-
-        // Helper function to convert a number to superscript
-        function toSuperscript(number) {
-            const superscripts = {
-                "0": "⁰",
-                "1": "¹",
-                "2": "²",
-                "3": "³",
-                "4": "⁴",
-                "5": "⁵",
-                "6": "⁶",
-                "7": "⁷",
-                "8": "⁸",
-                "9": "⁹"
-            };
-            return String(number)
-                .split("")
-                .map(digit => superscripts[digit] || digit)
-                .join("");
-        }
-
-        // Function to insert text at the cursor position in a content-editable div
-        function insertText(text) {
-            const selection = window.getSelection();
-            if (!selection.rangeCount) return;
-
-            const range = selection.getRangeAt(0);
-            range.deleteContents();
-
-            const textNode = document.createTextNode(text);
-            range.insertNode(textNode);
-
-            // Move the caret after the inserted text
-            range.setStartAfter(textNode);
-            range.setEndAfter(textNode);
-            selection.removeAllRanges();
-            selection.addRange(range);
-        }
-
-
-        // Function to convert numbers to subscript characters
-        function toSubscript(number) {
-            const subscripts = {
-            '0': '₀',
-            '1': '₁',
-            '2': '₂',
-            '3': '₃',
-            '4': '₄',
-            '5': '₅',
-            '6': '₆',
-            '7': '₇',
-            '8': '₈',
-            '9': '₉'
-            };
-            return number.split('').map(char => subscripts[char] || char).join('');
-        }
-
-    </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
-      crossorigin="anonymous"></script> 
-  </body>
-</html>
+        }, 3000);
+    });
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 from flask import request, redirect, url_for, render_template, session, jsonify, flash, send_file
 from extensions import db, app
 from flask_login import LoginManager, login_user, login_required, current_user, logout_user
-from models import User, School, Settings, QuizResult, Group, ArchivedSchool, Question
+from models import Users, School, Settings, QuizResult, UserGroup, ArchivedSchool, Question
 from flask_socketio import SocketIO, emit, disconnect
 import json
 from sqlalchemy.orm import aliased
@@ -17,6 +17,7 @@ from sqlalchemy.orm import sessionmaker
 import pandas as pd
 from datetime import datetime
 import traceback
+import uuid
 
 
 
@@ -42,7 +43,7 @@ login_manager.login_view = 'index'  # Redirect to login page if not logged in
 def load_user(user_id):
     # Updated method to get a record by ID
     with db.session() as session:
-        group = session.get(Group, int(user_id))
+        group = session.get(UserGroup, int(user_id))
         return group
 
 
@@ -71,6 +72,7 @@ def index():
     return render_template("index.html")
 
 @app.route('/start_quiz', methods=['GET'])
+@login_required
 def start_quiz():
     school_id = request.args.get('school_id')
     group_passcode = request.args.get('group_passcode')
@@ -83,21 +85,74 @@ def start_quiz():
     return redirect(url_for('game'))
 
 @app.route('/game', methods=['GET'])
+@login_required
 def game():
     school_id = session.get('school_id')
     group_passcode = session.get('group_passcode')
 
     # Now you can use school_id and group_passcode as needed
     school = School.query.filter_by(id=school_id).first()
-    group = Group.query.filter_by(school_id=school_id, passcode=group_passcode).first()
+    group = UserGroup.query.filter_by(school_id=school_id, passcode=group_passcode).first()
 
     return render_template("game.html", school=school, group=group)
 
 @app.route('/admin_start_quiz', methods=['GET', 'POST'])
+@login_required
 def admin_start_quiz():
-    return render_template("admin_quiz_session.html")
+    # Get current quiz settings
+    settings = Settings.query.first()
+    if not settings:
+        flash("Quiz settings not configured", "danger")
+        return redirect(url_for('settings'))
+    
+    # Get questions based on current configuration
+    questions = Question.query.filter_by(
+        season=settings.current_season,
+        subject=settings.current_subject
+    ).limit(settings.question_count).all()
+    
+    if len(questions) < settings.question_count:
+        flash(f"Warning: Only {len(questions)} questions available for the current configuration", "warning")
+    
+    # Convert questions to JSON format
+    questions_list = []
+    for question in questions:
+        questions_list.append({
+            "id": question.id,
+            "question": question.question_text,
+            "choice1": question.option_a,
+            "choice2": question.option_b,
+            "choice3": question.option_c,
+            "choice4": question.option_d,
+            "answer": question.correct_answer,
+            "image": question.image
+        })
+    
+    # Randomize the questions
+    random.shuffle(questions_list)
+    
+    # Save to JSON file
+    questions_json_path = os.path.join('static', 'questions', 'questions.json')
+    os.makedirs(os.path.dirname(questions_json_path), exist_ok=True)
+    
+    try:
+        with open(questions_json_path, 'w') as f:
+            json.dump(questions_list, f)
+    except Exception as e:
+        flash(f"Error saving questions: {str(e)}", "danger")
+        return redirect(url_for('settings'))
+    
+    # Pass quiz configuration to template
+    return render_template(
+        "admin_quiz_session.html",
+        question_count=settings.question_count,
+        current_season=settings.current_season,
+        current_subject=settings.current_subject.title(),
+        quiz_duration=settings.quiz_duration // 60  # Convert seconds to minutes
+    )
 
 @app.route('/highscores', methods=['GET', 'POST'])
+@login_required
 def highscores():
     return render_template("highscores.html")
 
@@ -124,11 +179,11 @@ def home():
         return render_template("index.html", error='Invalid school ID!')
 
     # Fetch the group that matches the passcode within the specified school
-    group = Group.query.filter_by(school_id=school.id, passcode=group_passcode).first()
+    group = UserGroup.query.filter_by(school_id=school.id, passcode=group_passcode).first()
 
     if group:
         # Get all members of the group
-        group_members = group.members
+        group_members = group.users
 
         # Prepare the list of student names
         student_names = [member.fullname for member in group_members]
@@ -144,55 +199,122 @@ def home():
 
         
         # For non-admin groups, render the regular home.html
+        login_user(group)  # Log in the actual group instance
         return render_template("home.html", school=school, group=group, student_names=student_names, allow_quiz=allow_quiz)
 
     flash('Invalid group passcode!', 'danger')
     return render_template("index.html")
 
-@app.route('/signup', methods=['POST'])
-def signup():
-    # Get form inputs
-    fullname = request.form.get('fullname', '').strip().lower()
-    school_id = request.form.get('school_id')
-    group_id = request.form.get('group_id')
-    
-    # Validate required fields
-    if not all([fullname, school_id, group_id]):
-        flash("Please fill in all required fields", "danger")
-        return render_template("index.html")
-    
-    try:
-        # Check registration status from settings
-        registration_setting = Settings.query.get(1)
-        if not registration_setting or not registration_setting.allow_registration:
-            return 'Registration has closed for this programme. Please try again later.', 403
-        
-        # Check group capacity (max 4 members)
-        group_member_count = User.query.filter_by(group_id=group_id).count()
-        if group_member_count >= 4:
-            flash('The selected group already has 4 members. Please select another group.', 'info')
-            return render_template("index.html")
-        
-        # Create new user (non-admin by default)
-        new_user = User(
-            fullname=fullname,
-            school_id=school_id,
-            group_id=group_id,
-            is_admin=False  # Default to False, admin status should be set separately
+@app.route('/settings')
+@login_required
+def settings():
+    # Get current settings or create default
+    current_settings = Settings.query.get(1)
+    if not current_settings:
+        current_settings = Settings(
+            allow_registration=True,
+            allow_quiz=True,
+            current_season=1,
+            current_subject='math',
+            question_count=10,
+            quiz_duration=1800  # 30 minutes in seconds
         )
-        
-        db.session.add(new_user)
+        db.session.add(current_settings)
         db.session.commit()
-        
-        flash("Registration successful.", "success")
-        return render_template("index.html")
-        
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error during signup: {str(e)}", "danger")
-        return render_template("index.html")
     
+    # Prepare other data (users, etc.)
+    users_with_schools = []
+    users = Users.query.all()
+    for user in users:
+        school = School.query.get(user.school_id)
+        group = UserGroup.query.get(user.user_group_id)
+        users_with_schools.append({
+            'id': user.id,
+            'fullname': user.fullname,
+            'school_name': school.name if school else 'N/A',
+            'group_name': group.name if group else 'N/A'
+        })
+    
+    return render_template(
+        "settings.html",
+        users=users_with_schools,
+        allow_registration=current_settings.allow_registration,
+        allow_quiz=current_settings.allow_quiz,
+        current_season=current_settings.current_season,
+        current_subject=current_settings.current_subject,
+        question_count=current_settings.question_count,
+        quiz_duration=current_settings.quiz_duration
+    )
 
+@app.route('/set-quiz-config', methods=['POST'])
+def set_quiz_config():
+    if request.method == 'POST':
+        try:
+            current_season = request.form.get('current_season')
+            current_subject = request.form.get('current_subject')
+            question_count = request.form.get('question_count')
+            quiz_duration = request.form.get('quiz_duration')
+            
+            # Validate inputs
+            if not all([current_season, current_subject, question_count, quiz_duration]):
+                flash("Please fill in all required fields", "danger")
+                return redirect(url_for('settings'))
+            
+            try:
+                current_season = int(current_season)
+                question_count = int(question_count)
+                quiz_duration = int(quiz_duration) * 60  # Convert minutes to seconds
+                
+                if question_count <= 0:
+                    flash("Number of questions must be at least 1", "danger")
+                    return redirect(url_for('settings'))
+                
+                if quiz_duration <= 0:
+                    flash("Quiz duration must be at least 1 minute", "danger")
+                    return redirect(url_for('settings'))
+                
+            except ValueError:
+                flash("Invalid number format", "danger")
+                return redirect(url_for('settings'))
+            
+            # Check if enough questions exist for this configuration
+            available_questions = Question.query.filter_by(
+                season=current_season,
+                subject=current_subject
+            ).count()
+            
+            if available_questions < question_count:
+                flash(f"Only {available_questions} questions available for this configuration", "warning")
+                #return redirect(url_for('settings'))
+            
+            # Get or create settings
+            settings = Settings.query.get(1)
+            if not settings:
+                settings = Settings(
+                    allow_registration=True,
+                    allow_quiz=True,
+                    current_season=current_season,
+                    current_subject=current_subject,
+                    question_count=question_count,
+                    quiz_duration=quiz_duration
+                )
+                db.session.add(settings)
+            else:
+                settings.current_season = current_season
+                settings.current_subject = current_subject
+                settings.question_count = question_count
+                settings.quiz_duration = quiz_duration
+            
+            db.session.commit()
+            
+            flash("Quiz configuration updated successfully", "success")
+            return redirect(url_for('settings'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error updating configuration: {str(e)}", "danger")
+            return redirect(url_for('settings'))
+        
 @app.route('/admin', methods=['GET'])
 @login_required
 def admin_panel():
@@ -214,7 +336,7 @@ def admin_panel():
 
         # Loop through groups to calculate total students
         for group in school.groups:
-            student_count = len(group.members)  # Count the number of students in this group
+            student_count = len(group.users)  # Count the number of students in this group
             total_students += student_count  # Add to total student count for the school
             total_students_all_schools += student_count  # Add to total student count for all schools
             
@@ -222,7 +344,7 @@ def admin_panel():
                 'name': group.name,
                 'passcode': group.passcode,
                 'student_count': student_count,  # Add student count for the group
-                'students': [{'name': student.fullname} for student in group.members]  # Fetch student names
+                'students': [{'name': student.fullname} for student in group.users]  # Fetch student names
             }
             school_data['groups'].append(group_data)
 
@@ -239,7 +361,7 @@ def admin_panel():
 def fetch_results(question_index):
     try:
         # Define aliased models to avoid naming conflicts
-        group_alias = aliased(Group)
+        group_alias = aliased(UserGroup)
         school_alias = aliased(School)
         
         # Fetch quiz results for the specific question, ordered by response time
@@ -299,12 +421,17 @@ def archive():
     return render_template('archive.html', archived_schools=schools_data)
 
 @app.route('/checkresults')
+@login_required
 def checkresults():
     return render_template('checkresult.html')
 
 @app.route('/questions_page', methods=['GET'])
+@login_required
 def questions_page():
-    return render_template('add_questions.html')
+    settings = Settings.query.first()
+    current_season = settings.current_season if settings else 1
+    current_subject = settings.current_subject if settings else 'math'
+    return render_template('add_questions.html', current_season=current_season, current_subject=current_subject)
 
 
 
@@ -316,6 +443,40 @@ def questions_page():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def allowed_file(filename):
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
 
 
@@ -421,7 +582,7 @@ def delete_school(id):
             students = school.archived_students
 
         # Prevent deletion of Admin group
-        if Group.query.filter_by(school_id=school.id).first().is_admin:
+        if UserGroup.query.filter_by(school_id=school.id).first().is_admin:
             flash(f'Admin group cannot be deleted!', 'danger')
             return redirect(url_for('admin_panel'))
         
@@ -450,7 +611,7 @@ def delete_school(id):
 def delete_user(user_id):
     if current_user.is_admin: # Ensure only admin can perform this action
         # Fetch the current setting
-        user = User.query.get_or_404(user_id)
+        user = Users.query.get_or_404(user_id)
         try:
             # Prevent deletion of Admin user
             if user.is_admin:
@@ -468,6 +629,7 @@ def delete_user(user_id):
     return redirect(url_for('settings'))
 
 @app.route('/add-school', methods=['POST'])
+@login_required
 def add_school():
     try:
         # Get school name and group count from the form
@@ -483,7 +645,7 @@ def add_school():
         # Create the specified number of groups for the school
         for i in range(1, group_count + 1):
             group_name = f"Group {i}"
-            new_group = Group(name=group_name, school_id=new_school.id)
+            new_group = UserGroup(name=group_name, school_id=new_school.id)
             db.session.add(new_group)
 
         db.session.commit()  # Commit groups to the database
@@ -519,49 +681,14 @@ def get_regular_schools():
 
 @app.route('/get_groups/<int:school_id>', methods=['GET'])
 def get_groups(school_id):
-    groups = Group.query.filter_by(school_id=school_id).all()
+    groups = UserGroup.query.filter_by(school_id=school_id).all()
     group_list = [{
         'id': group.id,
         'name': group.name,
-        'student_count': len(group.members)  # Assuming `group.members` returns a list of students
+        'student_count': len(group.users)  # Assuming `group.members` returns a list of students
     } for group in groups]
     
     return jsonify(group_list)
-
-@app.route('/settings', methods=['GET', 'POST'])
-def settings():
-    users_with_schools = []
-    # Fetch the current setting
-    current_setting = db.session.query(Settings).filter_by(id=1).first()
-
-    # Fetch all the users from the database
-    users = User.query.all()
-
-    for user in users:
-        school = School.query.filter_by(id=user.school_id).first()
-        group = Group.query.filter_by(id=user.school_id).first()
-        users_with_schools.append({
-            'id': user.id,
-            'fullname': user.fullname,
-            'school_name': school.name if school else 'N/A',
-            'group_name': group.name if group else 'N/A'
-        })
-
-    # If no setting exists, create a default one
-    if not current_setting:
-        current_setting = Settings(allow_registration=True, allow_quiz=True)  # Set default values
-        db.session.add(current_setting)
-        db.session.commit()
-
-    # Only toggle the allow_registration setting if the request method is POST
-    if request.method == 'POST':
-        current_setting.allow_registration = not current_setting.allow_registration
-
-        # Save the updated setting
-        db.session.commit()
-
-    # Render the template with the current setting
-    return render_template("settings.html", users=users_with_schools, allow_registration=current_setting.allow_registration, allow_quiz=current_setting.allow_quiz)
 
 @app.route('/archive_school/<int:school_id>', methods=['POST'])
 def archive_school(school_id):
@@ -571,7 +698,7 @@ def archive_school(school_id):
         return redirect(url_for('admin_panel'))
 
     try:
-        if Group.query.filter_by(school_id=school.id).first().is_admin:
+        if UserGroup.query.filter_by(school_id=school.id).first().is_admin:
             flash("You cannot archive Admin School!", "info")
         else:
             school.archive()
@@ -583,44 +710,111 @@ def archive_school(school_id):
     return redirect(url_for('admin_panel'))
 
 # Route for adding questions
-@app.route('/add_question', methods=['GET', 'POST'])
+@app.route('/add-question', methods=['GET', 'POST'])
 def add_question():
+    # Get current quiz configuration
+    current_settings = Settings.query.first()
+    
+    if not current_settings:
+        flash("Quiz configuration not set. Please configure quiz settings first.", "danger")
+        return redirect(url_for('settings'))
+
     if request.method == 'POST':
-        question_text = request.form['question_text']
-        option_a = request.form['option_a']
-        option_b = request.form['option_b']
-        option_c = request.form['option_c']
-        option_d = request.form['option_d']
-        correct_answer = request.form['correct_answer']
-        image = None
-
-        # Save the image if provided
-        if 'image' in request.files and request.files['image'].filename != '':
-            file = request.files['image']
-            filename = secure_filename(file.filename)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(image_path)
-            image = image_path
-
-        # Save the question to the database
-        new_question = Question(
-            question_text=question_text,
-            option_a=option_a,
-            option_b=option_b,
-            option_c=option_c,
-            option_d=option_d,
-            correct_answer=correct_answer,
-            image=image
-        )
-        db.session.add(new_question)
-        db.session.commit()
-
-        flash('Question Added!', 'success')
-        return redirect(url_for('add_question'))
-
-    return render_template('add_questions.html')  # This renders the form
+        try:
+            # Get form data
+            question_text = request.form.get('question_text', '').strip()
+            option_a = request.form.get('option_a', '').strip()
+            option_b = request.form.get('option_b', '').strip()
+            option_c = request.form.get('option_c', '').strip()
+            option_d = request.form.get('option_d', '').strip()
+            correct_answer = request.form.get('correct_answer')
+            image = request.files.get('image')
+            
+            # Validate required fields
+            if not all([question_text, option_a, option_b, option_c, option_d, correct_answer]):
+                print("Missing required fields")
+                print("Question Text:", question_text)
+                print("Option A:", option_a)
+                print("Option B:", option_b)
+                print("Option C:", option_c)
+                print("Option D:", option_d)
+                print("Correct Answer:", correct_answer)
+                flash("Please fill in all required fields", "danger")
+                return redirect(url_for('add_question'))
+            
+            # Validate question text length
+            if len(question_text) > 1000:
+                flash("Question text is too long (max 1000 characters)", "danger")
+                return redirect(url_for('add_question'))
+            
+            # Validate options length
+            for option in [option_a, option_b, option_c, option_d]:
+                if len(option) > 255:
+                    flash("Option text is too long (max 255 characters)", "danger")
+                    return redirect(url_for('add_question'))
+            
+            # Convert and validate correct answer
+            try:
+                correct_answer = int(correct_answer)
+                if correct_answer not in [1, 2, 3, 4]:
+                    raise ValueError
+            except ValueError:
+                flash("Invalid correct answer selection", "danger")
+                return redirect(url_for('add_question'))
+            
+            # Handle image upload if present
+            image = None
+            if image:
+                if not allowed_file(image.filename):
+                    flash("Invalid image file type. Allowed: png, jpg, jpeg, gif", "danger")
+                    return redirect(url_for('add_question'))
+                
+                if image.content_length > 4 * 1024 * 1024:  # 4MB limit
+                    flash("Image file is too large (max 4MB)", "danger")
+                    return redirect(url_for('add_question'))
+                
+                filename = secure_filename(image.filename)
+                image = f"{uuid.uuid4().hex}_{filename}"
+                try:
+                    image.save(os.path.join(app.config['UPLOAD_FOLDER'], image))
+                except Exception as e:
+                    flash(f"Failed to save image: {str(e)}", "danger")
+                    return redirect(url_for('add_question'))
+            
+            # Create new question with current season and subject from settings
+            new_question = Question(
+                question_text=question_text,
+                option_a=option_a,
+                option_b=option_b,
+                option_c=option_c,
+                option_d=option_d,
+                correct_answer=correct_answer,
+                image=image,
+                season=current_settings.current_season,
+                subject=current_settings.current_subject,
+                created_at=datetime.utcnow()
+            )
+            
+            db.session.add(new_question)
+            db.session.commit()
+            
+            flash("Question added successfully!", "success")
+            return redirect(url_for('add_question'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error adding question: {str(e)}", "danger")
+            return redirect(url_for('add_question'))
+    
+    # For GET requests, show form with current configuration
+    return render_template(
+        "add_questions.html",
+        current_season=current_settings.current_season,
+        current_subject=current_settings.current_subject.title()
+    )
 
 @app.route('/generate_questions_json', methods=['POST'])
+@login_required
 def generate_questions_json():
     # Get the number of questions from the form
     num_questions = int(request.form.get('num_questions', 0))
@@ -712,7 +906,7 @@ def process_download():
         local_engine = create_engine(app.config['SQLALCHEMY_BINDS']['local'])
         
         # Tables needed for offline quiz
-        tables = ['school', 'group', 'user', 'quiz', 'questions']
+        tables = ['school', 'user_group', 'users', 'quiz', 'questions']
         
         results = {}
         
@@ -845,6 +1039,63 @@ def process_upload():
         flash(f"Upload failed: {str(e)}", "danger")
         return redirect(url_for('admin_panel'))
 
+@app.route('/configure-quiz', methods=['POST'])
+def configure_quiz():
+    if request.method == 'POST':
+        try:
+            # Get form data
+            season = request.form.get('quiz_season')
+            subject = request.form.get('quiz_subject')
+            question_count = request.form.get('question_count')
+            
+            # Validate inputs
+            if not all([season, subject, question_count]):
+                flash("Please fill in all required fields", "danger")
+                return redirect(url_for('settings'))
+            
+            # Convert to integers
+            try:
+                season = int(season)
+                question_count = int(question_count)
+            except ValueError:
+                flash("Invalid season or question count format", "danger")
+                return redirect(url_for('settings'))
+            
+            # Check if questions exist for this season and subject
+            question_count_available = Question.query.filter_by(
+                season=season,
+                subject=subject.lower()
+            ).count()
+            
+            if question_count_available < question_count:
+                flash(f"Only {question_count_available} questions available for {subject.title()} in Season {season}", "warning")
+                return redirect(url_for('settings'))
+            
+            # Get or create settings
+            settings = Settings.query.get(1)
+            if not settings:
+                settings = Settings(
+                    allow_registration=True,
+                    allow_quiz=True,
+                    current_season=season,
+                    current_subject=subject,
+                    question_count=question_count
+                )
+                db.session.add(settings)
+            else:
+                settings.current_season = season
+                settings.current_subject = subject
+                settings.question_count = question_count
+            
+            db.session.commit()
+            
+            flash(f"Quiz configured: Season {season}, {subject.title()} with {question_count} questions", "success")
+            return redirect(url_for('settings'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error configuring quiz: {str(e)}", "danger")
+            return redirect(url_for('settings'))
 
 
 
@@ -894,7 +1145,7 @@ def calculate_score(base_score, time_taken, time_limit):
 #export data from DB to txt
 def export_database_to_txt(output_file="database_dump.txt"):
     with open(output_file, "w", encoding="utf-8") as f:
-        for model in [User, School, Group]:  # Add all models you want
+        for model in [Users, School, UserGroup]:  # Add all models you want
             f.write(f"--- {model.__name__} ---\n")
             records = model.query.all()
             if not records:
@@ -908,9 +1159,9 @@ def export_database_to_txt(output_file="database_dump.txt"):
             f.write("\n")
     return output_file
 
-@app.route("/update-group")
+@app.route("/update-group", methods=["POST"])
 def update_group():
-    group = Group.query.filter_by(passcode="EEAS5I00").first()
+    group = UserGroup.query.filter_by(passcode="EEAS5I00").first()
     if group:
         group.passcode = "1234ABCD"
         group.is_admin = True
@@ -972,7 +1223,7 @@ def handle_connect():
         school_id = session['school_id']
         
         # Retrieve group details from the database
-        group = Group.query.filter_by(id=group_id, school_id=school_id).first()
+        group = UserGroup.query.filter_by(id=group_id, school_id=school_id).first()
         if group:
             # Store group information based on socket session ID
             connected_clients[request.sid] = {
@@ -1034,7 +1285,7 @@ def handle_submit_answer(data):
     questions = load_questions()  # Load questions from JSON file
 
     if group_info:
-        group_id = group_info['group_id']
+        user_group_id = group_info['group_id']
         answer = data.get('answer')  # This is expected to be "A", "B", "C", or "D"
         question_index = data.get('question_index')
         response_time = data.get('response_time', 0)
@@ -1046,7 +1297,7 @@ def handle_submit_answer(data):
             return  # Invalid question index
 
         # Retrieve the group and associated school name
-        group = Group.query.get(group_id)
+        group = UserGroup.query.get(user_group_id)
         school_name = group.school.name if group and group.school else "Unknown School"  # Get school name or default
 
         # Get the correct answer's letter by mapping letters to choices
@@ -1089,7 +1340,7 @@ def handle_submit_answer(data):
 
         # Save the result in the database
         quiz_result = QuizResult(
-            group_id=group_id,
+            user_group_id=user_group_id,
             question_index=question_index,
             answer=answer,  # Store the letter choice ("A", "B", "C", or "D")
             result=result,
@@ -1112,7 +1363,7 @@ def handle_submit_answer(data):
 def handle_fetch_total_group_results():
     try:
         # Define aliased models to avoid naming conflicts
-        group_alias = aliased(Group)
+        group_alias = aliased(UserGroup)
         school_alias = aliased(School)
         
         # Calculate total scores and response times for each group

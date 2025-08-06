@@ -1,167 +1,142 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>ICM MATH CLICKATHON - Admin</title>
-    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/flashmsg.css') }}">
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-  
-  </head>
-  <body>
-    <div id="mySidebar" class="sidebar">
-        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()"><i class="lni lni-arrow-left-circle"></i></a>
-        <div class="d-flex">
-            <div class="sidebar-logo">
-                <a href="#">ICM MATH CLICKATHON</a>
-            </div>
-        </div>
-        <br><br><hr>
-        <a href="{{ url_for('admin_panel') }}" class="sidebar-link">
-            <i class="lni lni-user"></i>
-            <span>Profile</span>
-        </a>
-        <a href="{{ url_for('archive') }}" class="sidebar-link">
-            <i class="lni lni-agenda"></i>
-            <span>Archive</span>
-        </a>
-        <a href="{{ url_for('admin_start_quiz') }}" class="sidebar-link collapsed has-dropdown"
-                      data-bs-target="#auth" aria-expanded="false" aria-controls="auth">
-                      <i class="lni lni-protection"></i>
-                      <span>Start Quiz session</span>
-        </a>
-        <a href="{{ url_for('questions_page') }}" class="sidebar-link">
-            <i class="lni lni-popup"></i>
-            <span>Upload questions</span>
-        </a>
-        <a href="{{ url_for('sync_database') }}" class="sidebar-link">
-            <i class="lni lni-popup"></i>
-            <span>Sync Database</span>
-        </a>
-        <a href="{{ url_for('settings') }}" class="sidebar-link">
-            <i class="lni lni-cog"></i>
-            <span>Setting</span>
-        </a>
-        <a href="{{ url_for('logout') }}" class="sidebar-link">
-            <i class="lni lni-exit"></i>
-            <span>Logout</span>
-        </a>
-    </div>
-      
-    <div id="main">
-        <button class="openbtn" onclick="openNav()"><i class="lni lni-arrow-right-circle"></i></button>
-        <div class="container">
-            <div id="home" class="flex-center flex-column">
-                <h1 class="text-center">Software settings</h1><br><hr>
+{% extends "base.html" %}
 
-                <!-- Flash message div -->
-                <div>
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="flash {{ category }}">{{ message }}</div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
-                </div>
-                <h4>Manage Schools</h4>
-                <br><hr>
-                <h4>Add New School</h4>
-                <form action="/add-school" method="POST">
-                    <div class="mb-3">
-                        <label for="schoolname" class="form-label">School Name</label>
-                        <input type="text" class="form-control" id="schoolname" name="schoolname" placeholder="Enter school name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="groupcount" class="form-label">Number of Groups</label>
-                        <input type="number" class="form-control" id="groupcount" name="groupcount" placeholder="Enter number of groups" required min="1">
-                    </div>
-                    <div class="mb-3">
-                        <label for="season" class="form-label">Quiz Season</label>
-                        <input type="number" class="form-control" id="season" name="season" placeholder="Enter the season" required min="1">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Add School and Groups</button>
-                </form>
-                <br><br><hr>
-                <h4>Enable/Disable Registration</h4>
-                <form action="{{ url_for('toggle_registration') }}" method="POST">
-                    <button type="submit" class="btn btn-primary">
-                        {% if allow_registration %}
-                        Disable Registration (Registration is on)
-                        {% else %}
-                        Enable Registration (Registration is off)
-                        {% endif %}
-                    </button>
-                </form>
-                <br><br><hr>
-                <h4>Enable/Disable Quiz</h4>
-                <form action="{{ url_for('toggle_quiz') }}" method="POST">
-                    <button type="submit" class="btn btn-primary">
-                        {% if allow_quiz %}
-                        Disable Quiz (Quiz is Enabled)
-                        {% else %}
-                        Enable Quiz (Quiz is disabled)
-                        {% endif %}
-                    </button>
-                </form>
-                <br><br><hr>
-                <h4>Manage students</h4>
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>S/N</th>  <!-- Serial Number Column -->
-                            <th>Student Name</th>
-                            <th>School Name</th>
-                            <th>Group name</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in users %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ user.fullname | title }}</td>
-                            <td>{{ user.school_name }}</td>
-                            <td>{{ user.group_name }}</td>
-                            <td>
-                                <form action="{{ url_for('delete_user', user_id=user.id)}}" method="post" onsubmit="return confirm('Are you sure you want to delete this student?');">
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                </form>
-                            </td>
-                        </tr>
+{% block title %}ICM MATH CLICKATHON - Admin{% endblock %}
+
+{% block content %}
+<div id="main">
+    <div class="container">
+        <div id="home" class="flex-center flex-column">
+            <h1 class="text-center">Software settings</h1><br><hr>
+
+            <!-- Flash message div -->
+            <div>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
                         {% endfor %}
-                    </tbody>
-                </table>
+                    {% endif %}
+                {% endwith %}
             </div>
+
+            <!-- Manage Schools -->
+            <h4>Add New School</h4>
+            <form action="/add-school" method="POST">
+                <div class="mb-3">
+                    <label for="schoolname" class="form-label">School Name</label>
+                    <input type="text" class="form-control" id="schoolname" name="schoolname" placeholder="Enter school name" required>
+                </div>
+                <div class="mb-3">
+                    <label for="groupcount" class="form-label">Number of Groups</label>
+                    <input type="number" class="form-control" id="groupcount" name="groupcount" placeholder="Enter number of groups" required min="1">
+                </div>
+                <div class="mb-3">
+                    <label for="season" class="form-label">Quiz Season</label>
+                    <input type="number" class="form-control" id="season" name="season" placeholder="Enter the season" required min="1">
+                </div>
+                <button type="submit" class="btn btn-primary">Add School and Groups</button>
+            </form>
+            <br><br><hr>
+            <h4>Enable/Disable Registration</h4>
+            <form action="{{ url_for('toggle_registration') }}" method="POST">
+                <button type="submit" class="btn btn-primary">
+                    {% if allow_registration %}
+                    Disable Registration (Registration is on)
+                    {% else %}
+                    Enable Registration (Registration is off)
+                    {% endif %}
+                </button>
+            </form>
+            <br><br><hr>
+            <h4>Enable/Disable Quiz</h4>
+            <form action="{{ url_for('toggle_quiz') }}" method="POST">
+                <button type="submit" class="btn btn-primary">
+                    {% if allow_quiz %}
+                    Disable Quiz (Quiz is Enabled)
+                    {% else %}
+                    Enable Quiz (Quiz is disabled)
+                    {% endif %}
+                </button>
+            </form>
+            <br><br><hr>
+            
+            <!-- Quiz Configuration -->
+            <h4>Set Current Quiz Configuration</h4>
+            <form action="{{ url_for('set_quiz_config') }}" method="POST">
+                <div class="mb-3">
+                    <label for="current_season" class="form-label">Current Season</label>
+                    <input type="number" class="form-control" id="current_season" name="current_season" 
+                        value="{{ current_season }}" min="1" required>
+                </div>
+                <div class="mb-3">
+                    <label for="current_subject" class="form-label">Current Subject</label>
+                    <select class="form-select" id="current_subject" name="current_subject" required>
+                        <option value="" disabled>Select Subject</option>
+                        <option value="math" {% if current_subject == 'math' %}selected{% endif %}>Mathematics</option>
+                        <option value="science" {% if current_subject == 'science' %}selected{% endif %}>Science</option>
+                        <option value="english" {% if current_subject == 'english' %}selected{% endif %}>English</option>
+                        <option value="general" {% if current_subject == 'general' %}selected{% endif %}>General Knowledge</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="question_count" class="form-label">Number of Questions</label>
+                    <input type="number" class="form-control" id="question_count" name="question_count" 
+                        value="{{ question_count }}" min="1" max="100" required>
+                </div>
+                <div class="mb-3">
+                    <label for="quiz_duration" class="form-label">Quiz Duration (minutes)</label>
+                    <input type="number" class="form-control" id="quiz_duration" name="quiz_duration" 
+                        value="{{ quiz_duration // 60 }}" min="1" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Save Configuration</button>
+            </form>
+            
+            <br><br><hr>
+
+            <h4>Manage students</h4>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>S/N</th>  <!-- Serial Number Column -->
+                        <th>Student Name</th>
+                        <th>School Name</th>
+                        <th>Group name</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ user.fullname | title }}</td>
+                        <td>{{ user.school_name }}</td>
+                        <td>{{ user.group_name }}</td>
+                        <td>
+                            <form action="{{ url_for('delete_user', user_id=user.id)}}" method="post" onsubmit="return confirm('Are you sure you want to delete this student?');">
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
+{% endblock %}
 
-
-
-
-
-
-    <script>
-        window.onload = function() {
-            setTimeout(function() {
-                var flashes = document.getElementsByClassName('flash');
-                for (var i = 0; i < flashes.length; i++) {
-                    flashes[i].style.opacity = '0';
-                    setTimeout(function(flash) {
-                        flash.style.display = 'none';
-                    }, 500, flashes[i]); // Adjust the time to match the transition duration
-                }
-            }, 3000); // Adjust the duration the flash message should be visible (in milliseconds)
-            };
-    </script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
-      crossorigin="anonymous"></script>
-  <script src="{{ url_for('static', filename='js/script.js') }}"></script>  
-  </body>
-</html>
+{% block scripts %}
+<script>
+    window.onload = function() {
+        setTimeout(function() {
+            var flashes = document.getElementsByClassName('flash');
+            for (var i = 0; i < flashes.length; i++) {
+                flashes[i].style.opacity = '0';
+                setTimeout(function(flash) {
+                    flash.style.display = 'none';
+                }, 500, flashes[i]); // Adjust the time to match the transition duration
+            }
+        }, 3000); // Adjust the duration the flash message should be visible (in milliseconds)
+    };
+</script>
+{% endblock %}

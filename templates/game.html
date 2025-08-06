@@ -1,228 +1,175 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "user_base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ICM MATH CLICKATHON - Quiz session</title>
-    <link href="https://cdn.lineicons.com/4.0/lineicons.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
-    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+{% block title %}Quiz Session - ICM MATH CLICKATHON{% endblock %}
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Ga+Maamli&display=swap" rel="stylesheet">
-</head>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ga+Maamli&display=swap" rel="stylesheet">
+{% endblock %}
 
-<body>
-    <a href="{{ url_for('logout') }}" class="sidebar-link">
-        <i class="lni lni-exit"></i>
-        <span>Logout</span>
-    </a>
-    <div class="main p-3">
-        <div class="container">
-            <div class="text-center">
-                <h1 class="ga-maamli-regular">ICM MATH CLICKATHON</h1>
-                <h4>{{ school.name }}.</h4>
-                <h4>({{ group.name }})</h4>
-                <div class="tc" id="clientCount">Active Groups: 0</div>
-                <div class="tc" id="timer">[ 00:45 ]</div> <!-- Timer display for the client -->
-                <!-- <div class="tc" id="question"></div> -->
-                <div class="tc" id="choices"></div>
-                <!-- <div class="tc" id="messages"></div> -->
-            </div>
+{% block content %}
+<div class="main p-3">
+    <div class="container">
+        <div class="text-center">
+            <h1 class="ga-maamli-regular">ICM MATH CLICKATHON</h1>
+            <h4>{{ school.name }}</h4>
+            <h4>({{ group.name }})</h4>
+            <div class="tc" id="clientCount">Active Groups: 0</div>
+            <div class="tc" id="timer">[ 00:45 ]</div>
+            <div class="tc" id="choices"></div>
         </div>
     </div>
-    <script>
-        let timerInterval;
-        let timeLeft = 0; // Time left in seconds
-        let currentQuestionIndex = null;
-        const socket = io();
-        let connectedClientsCount = 0;
-        let questionStartTime = null;
-        let selectedChoice = null;  // Define globally to be accessible in both submitAnswer and answer_result
-        let answered = false;  // Track if the user has already answered
+</div>
+{% endblock %}
 
-        socket.on('connect', () => {
-            console.log('Connected to server');
-        });
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script>
+    let timerInterval;
+    let timeLeft = 0;
+    let currentQuestionIndex = null;
+    const socket = io();
+    let connectedClientsCount = 0;
+    let questionStartTime = null;
+    let selectedChoice = null;
+    let answered = false;
 
-        socket.on('update_client_count', (count) => {
-            connectedClientsCount = count;
-            document.getElementById('clientCount').textContent = `Active Groups: ${connectedClientsCount}`;
-        });
+    socket.on('connect', () => {
+        console.log('Connected to server');
+    });
 
-        /*socket.on('message', (message) => {
-            console.log('Message from server:', message);
-            const messagesDiv = document.getElementById('messages');
-            const messageElement = document.createElement('p');
-            messageElement.textContent = message;
-            messagesDiv.appendChild(messageElement);
-        });*/
+    socket.on('update_client_count', (count) => {
+        connectedClientsCount = count;
+        document.getElementById('clientCount').textContent = `Active Groups: ${connectedClientsCount}`;
+    });
 
-        socket.on('new_question', (question) => {
-            answered = false; // Reset answered flag for each new question
-            console.log('New question received:', question);
-            currentQuestionIndex = question.index;
+    socket.on('new_question', (question) => {
+        answered = false;
+        currentQuestionIndex = question.index;
+        const choicesDiv = document.getElementById('choices');
         
-            const choicesDiv = document.getElementById('choices');
+        choicesDiv.classList.add('fade-out');
+        
+        setTimeout(() => {
+            choicesDiv.innerHTML = '';
             
-            // Step 1: Apply fade-out animation to current question and choices
-            choicesDiv.classList.add('fade-out');
-        
-            // Delay updates until fade-out completes
-            setTimeout(() => {
-                choicesDiv.innerHTML = ''; // Clear previous choices
-        
-                // Check if the question is valid before starting the timer
-                if (question.question !== '' && Object.values(question.choices).some(choice => choice !== '')) {
-                    startTimer(45); // Start timer for 45 seconds
-                    questionStartTime = Date.now();
-                } else {
-                    clearInterval(timerInterval);
-                    document.getElementById('timer').textContent = '[ 00:00 ]'; // Initial display for new question timer
-                }
-        
-                // Apply grid container styling to choices div
-                choicesDiv.classList.add('grid-container');
-        
-                // Create buttons for each choice, now using letters A, B, C, D as labels
-                Object.entries(question.choices).forEach(([letter, choiceText]) => {
-                    const choiceButton = document.createElement('button');
-                    choiceButton.textContent = `${letter}`; // Display as "A: choiceText", etc.
-                    choiceButton.classList.add('grid-item');
-                    choiceButton.onclick = () => submitAnswer(letter);
-                    choicesDiv.appendChild(choiceButton);
-                });
-        
-                // Step 2: Add fade-in effect for new content
-                choicesDiv.classList.remove('fade-out');
-                choicesDiv.classList.add('fade-in');
-        
-                // Enable all buttons after fade-in
-                const buttons = choicesDiv.getElementsByClassName('grid-item');
-                for (let button of buttons) {
-                    button.disabled = false;
-                }
-        
-            }, 500); // 500ms delay for fade-out effect
-
-            // Remove fade-in class after animation completes
-            setTimeout(() => {
-                choicesDiv.classList.remove('fade-in');
-            }, 1000); // Duration of fade-in (0.5s in this case) plus buffer time
-        });
-        
-        
-        // Moved answer_result listener outside submitAnswer to avoid multiple listeners
-        socket.on('answer_result', ({ correct_answer, response_time }) => { // Destructure correctly
-            const choicesDiv = document.getElementById('choices');
-            console.log(document.getElementsByClassName('grid-item'));
-            console.log('Correct Answer:', correct_answer);
-            console.log('Selected Choice:', selectedChoice);
-        
-            const buttons = document.getElementsByClassName('grid-item');
+            if (question.question !== '' && Object.values(question.choices).some(choice => choice !== '')) {
+                startTimer(45);
+                questionStartTime = Date.now();
+            } else {
+                clearInterval(timerInterval);
+                document.getElementById('timer').textContent = '[ 00:00 ]';
+            }
             
-            if (buttons.length > 0) {
-                // Disable all buttons after an answer is selected
-                for (let i = 0; i < buttons.length; i++) {
-                    buttons[i].disabled = true;
-                }
+            choicesDiv.classList.add('grid-container');
+            
+            Object.entries(question.choices).forEach(([letter, choiceText]) => {
+                const choiceButton = document.createElement('button');
+                choiceButton.textContent = `${letter}`;
+                choiceButton.classList.add('grid-item');
+                choiceButton.onclick = () => submitAnswer(letter);
+                choicesDiv.appendChild(choiceButton);
+            });
+            
+            choicesDiv.classList.remove('fade-out');
+            choicesDiv.classList.add('fade-in');
+            
+            const buttons = choicesDiv.getElementsByClassName('grid-item');
+            for (let button of buttons) {
+                button.disabled = false;
+            }
+            
+        }, 500);
+
+        setTimeout(() => {
+            choicesDiv.classList.remove('fade-in');
+        }, 1000);
+    });
+    
+    socket.on('answer_result', ({ correct_answer, response_time }) => {
+        const choicesDiv = document.getElementById('choices');
+        const buttons = document.getElementsByClassName('grid-item');
         
-                // Map letter choices to indices
-                const letterToIndex = {
-                    'A': 0,
-                    'B': 1,
-                    'C': 2,
-                    'D': 3
-                };
+        if (buttons.length > 0) {
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].disabled = true;
+            }
 
-                // Validate the selectedChoice and correct_answer
-                if (!(selectedChoice in letterToIndex)) {
-                    console.error('Invalid selected choice');
-                    return; // Exit early if invalid
-                }
+            const letterToIndex = {
+                'A': 0,
+                'B': 1,
+                'C': 2,
+                'D': 3
+            };
 
-                if (!(correct_answer in letterToIndex)) {
-                    console.error('Invalid correct answer');
-                    return; // Exit early if invalid
-                }
+            if (!(selectedChoice in letterToIndex) || !(correct_answer in letterToIndex)) {
+                console.error('Invalid choice or answer');
+                return;
+            }
 
-                // Get the indices from the letters
-                const clickedButtonIndex = letterToIndex[selectedChoice]; // Get index from letter
-                const correctButtonIndex = letterToIndex[correct_answer];  // Get index from letter
+            const clickedButtonIndex = letterToIndex[selectedChoice];
+            const correctButtonIndex = letterToIndex[correct_answer];
 
-                const clickedButton = buttons[clickedButtonIndex]; // Selected choice button
-                const correctButton = buttons[correctButtonIndex];  // Correct answer button
+            const clickedButton = buttons[clickedButtonIndex];
+            const correctButton = buttons[correctButtonIndex];
 
-                if (!clickedButton || !correctButton) {
-                    console.error('Button element not found');
-                    return; // Exit early if buttons are not found
-                }
+            if (!clickedButton || !correctButton) {
+                console.error('Button element not found');
+                return;
+            }
 
-                // Handle correct or incorrect answers
-                if (selectedChoice === correct_answer) {
-                    clickedButton.classList.remove('grid-item');
-                    clickedButton.classList.add('correct');  // Correct answer
-                } else {
-                    clickedButton.classList.remove('grid-item');
-                    clickedButton.classList.add('incorrect');  // Incorrect answer
-                    correctButton.classList.remove('grid-item');
-                    correctButton.classList.add('correct');    // Highlight correct answer
+            if (selectedChoice === correct_answer) {
+                clickedButton.classList.remove('grid-item');
+                clickedButton.classList.add('correct');
+            } else {
+                clickedButton.classList.remove('grid-item');
+                clickedButton.classList.add('incorrect');
+                correctButton.classList.remove('grid-item');
+                correctButton.classList.add('correct');
+            }
+        } else {
+            console.warn('No elements found with the specified class name.');
+        }
+    });
+    
+    function submitAnswer(choice) {
+        if (answered) return;
+
+        selectedChoice = choice;
+        const responseTime = (Date.now() - questionStartTime) / 1000;
+        console.log('Submitting answer:', choice, 'Response time:', responseTime);
+        socket.emit('submit_answer', {
+            question_index: currentQuestionIndex,
+            answer: choice,
+            response_time: parseFloat(responseTime.toFixed(2))
+        });
+
+        answered = true;
+    }
+
+    function startTimer(duration) {
+        timeLeft = duration;
+        clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                if (!answered) {
+                    submitAnswer(0);
                 }
             } else {
-                console.warn('No elements found with the specified class name.');
+                timeLeft--;
+                updateTimerDisplay();
             }
-        });
-        
-        function submitAnswer(choice) {
-            if (answered) return;  // Don't submit if already answered
+        }, 1000);
+    }
 
-            // Set selectedChoice so it's available in answer_result
-            selectedChoice = choice;
-
-            const responseTime = (Date.now() - questionStartTime) / 1000;  // Get response time in seconds
-            console.log('Submitting answer:', choice, 'Response time:', responseTime);
-            socket.emit('submit_answer', {
-                question_index: currentQuestionIndex,
-                answer: choice,
-                response_time: parseFloat(responseTime.toFixed(2))  // Send as float with 2 decimal points
-            });
-
-            answered = true;  // Mark the user as having answered
-        }
-
-        function startTimer(duration) {
-            timeLeft = duration;
-            clearInterval(timerInterval);  // Clear any existing timers
-
-            timerInterval = setInterval(() => {
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    if (!answered) {
-                        submitAnswer(0);  // Automatically submit "time-up" answer if not already answered
-                    }
-                } else {
-                    timeLeft--;
-                    updateTimerDisplay();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-            const seconds = String(timeLeft % 60).padStart(2, '0');
-            document.getElementById('timer').textContent = `[ ${minutes}:${seconds} ]`;
-        }
-
-    </script>
-  
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-ENjdO4Dr2bkBIFxQpeoTz1HIcje39Wm4jDKdf19U8gI4ddQ3GYNS7NTKfAdVQSZe"
-        crossorigin="anonymous"></script>
-</body>
-
-</html>
+    function updateTimerDisplay() {
+        const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
+        const seconds = String(timeLeft % 60).padStart(2, '0');
+        document.getElementById('timer').textContent = `[ ${minutes}:${seconds} ]`;
+    }
+</script>
+{% endblock %}
