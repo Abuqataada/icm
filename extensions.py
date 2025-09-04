@@ -11,10 +11,10 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "for_development")
 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'users.db')
-app.config['SQLALCHEMY_BINDS'] = {
-    'remote': 'postgresql://neondb_owner:npg_CzyA6c9imSWL@ep-noisy-sun-a41ubng9-pooler.us-east-1.aws.neon.tech/icm_db?sslmode=require&channel_binding=require',
-    'local': 'sqlite:///' + os.path.join(app.instance_path, 'users.db')
-}
+#app.config['SQLALCHEMY_BINDS'] = {
+#    'remote': 'postgresql://neondb_owner:npg_CzyA6c9imSWL@ep-noisy-sun-a41ubng9-pooler.us-east-1.aws.neon.tech/icm_db?sslmode=require&channel_binding=require',
+#    'local': 'sqlite:///' + os.path.join(app.instance_path, 'users.db')
+#}
 
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

@@ -60,7 +60,7 @@ body {
     width: 100%;
     overflow: hidden;
     transition: all 0.35s ease-in-out;
-    background: url('../images/icm.png') no-repeat center center/cover;
+    background: url('../images/home_background-1.jpg') no-repeat center center/cover;
     background-color: #d0fffd;
 }
 

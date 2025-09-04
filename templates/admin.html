@@ -2,42 +2,448 @@
 
 {% block title %}Admin Dashboard{% endblock %}
 
-{% block content %}
-<div id="home" class="flex-center flex-column">
-    <h1 class="text-center">Admin</h1>
-    <hr>
-    <h4>Season {{ schools[0]['season'] }} in progress!</h4>
-    <hr>
-    <h4>Students Registered: {{ total_students_all_schools - 1 }}</h4>
-    <h4>Schools registered:</h4>
-    <p>({{ num_of_schools - 1 }} schools registered)</p>
-    <hr>
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #4e54c8;
+        --secondary-color: #8f94fb;
+        --accent-color: #06b30e;
+        --error-color: #e74c3c;
+        --warning-color: #f39c12;
+        --light-color: #ffffff;
+        --dark-color: #0e2238;
+        --text-light: #f8f9fa;
+        --text-dark: #212529;
+        --card-bg: rgba(255, 255, 255, 0.95);
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        --border-radius: 16px;
+        --transition: all 0.3s ease;
+    }
     
-    <div class="school-list">
+    body {
+        font-family: 'Poppins', sans-serif;
+        background: linear-gradient(135deg, rgba(14, 34, 56, 0.9) 0%, rgba(78, 84, 200, 0.85) 100%);
+        color: var(--text-light);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    #main {
+        transition: margin-left 0.5s;
+        padding: 20px;
+        margin-left: 0;
+    }
+    
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        color: var(--text-dark);
+    }
+    
+    .dashboard-title {
+        font-family: "Ga Maamli", sans-serif;
+        font-size: 2.5rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+    
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        text-align: center;
+        box-shadow: var(--shadow);
+        transition: var(--transition);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+    }
+    
+    .stat-label {
+        font-size: 1.1rem;
+        color: #6c757d;
+    }
+    
+    .schools-container {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--shadow);
+        color: var(--text-dark);
+    }
+    
+    .schools-title {
+        font-size: 1.8rem;
+        color: var(--primary-color);
+        margin-bottom: 20px;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .schools-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+    
+    .school-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        transition: var(--transition);
+    }
+    
+    .school-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+    
+    .school-name {
+        font-size: 1.3rem;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+    
+    .school-stats {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .stat {
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .stat-text {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .groups-list {
+        margin-top: 15px;
+    }
+    
+    .group-item {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+    }
+    
+    .group-name {
+        font-weight: 600;
+        color: var(--dark-color);
+    }
+    
+    .group-passcode {
+        font-size: 0.9rem;
+        color: #6c757d;
+        background: #f1f3f5;
+        padding: 3px 8px;
+        border-radius: 4px;
+    }
+    
+    .students-list {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px dashed #dee2e6;
+    }
+    
+    .student-item {
+        font-size: 0.9rem;
+        color: #495057;
+        padding: 3px 0;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .btn-custom {
+        padding: 8px 15px;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn-delete {
+        background: var(--error-color);
+        color: white;
+    }
+    
+    .btn-delete:hover {
+        background: #c0392b;
+        transform: translateY(-2px);
+    }
+    
+    .btn-archive {
+        background: var(--warning-color);
+        color: white;
+    }
+    
+    .btn-archive:hover {
+        background: #e67e22;
+        transform: translateY(-2px);
+    }
+    
+    /* Flash messages */
+    .flash {
+        text-align: center;
+        padding: 12px 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        position: relative;
+        transition: opacity 0.5s ease-out;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        font-weight: 500;
+    }
+    
+    .flash.success { 
+        background-color: #d4edda; 
+        color: #155724; 
+        border-left: 4px solid #28a745;
+    }
+    
+    .flash.danger { 
+        background-color: #f8d7da; 
+        color: #721c24; 
+        border-left: 4px solid #dc3545;
+    }
+    
+    .flash.info { 
+        background-color: #d1ecf1; 
+        color: #0c5460; 
+        border-left: 4px solid #17a2b8;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+        height: 100%;
+        width: 0;
+        position: fixed;
+        z-index: 1000;
+        top: 0;
+        left: 0;
+        background: var(--dark-color);
+        overflow-x: hidden;
+        transition: 0.5s;
+        padding-top: 60px;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .sidebar a {
+        padding: 12px 15px 12px 30px;
+        text-decoration: none;
+        font-size: 1.1rem;
+        color: #adb5bd;
+        display: block;
+        transition: 0.3s;
+        margin: 5px 0;
+        border-left: 3px solid transparent;
+    }
+    
+    .sidebar a:hover {
+        color: #f1f1f1;
+        background: rgba(255, 255, 255, 0.1);
+        border-left: 3px solid var(--primary-color);
+    }
+    
+    .sidebar .closebtn {
+        position: absolute;
+        top: 15px;
+        right: 25px;
+        font-size: 36px;
+        margin-left: 50px;
+        color: #f1f1f1;
+    }
+    
+    .openbtn {
+        font-size: 20px;
+        cursor: pointer;
+        background: var(--primary-color);
+        color: white;
+        padding: 12px 15px;
+        border: none;
+        border-radius: 6px;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 999;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: var(--transition);
+    }
+    
+    .openbtn:hover {
+        background: #3a3fb8;
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .schools-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .dashboard-title {
+            font-size: 2rem;
+        }
+        
+        .school-card {
+            padding: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1 class="dashboard-title">Admin Dashboard</h1>
+    <h4>Season {{ schools[0]['season'] }} in progress!</h4>
+</div>
+
+<div class="stats-container">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_students_all_schools - 1 }}</div>
+        <div class="stat-label">Total Students Registered</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ num_of_schools - 1 }}</div>
+        <div class="stat-label">Schools Registered</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">
+            {% set total_groups = 0 %}
+            {% for school in schools %}
+                {% set total_groups = total_groups + school['group_count'] %}
+            {% endfor %}
+            {{ total_groups }}
+        </div>
+        <div class="stat-label">Total Groups</div>
+    </div>
+</div>
+
+<div class="schools-container">
+    <h2 class="schools-title">Registered Schools</h2>
+    
+    <div class="schools-grid">
         {% for school in schools %}
-        <div class="school-item">
-            <strong>{{ school['name'] }} ({{ school['group_count'] }} groups, {{ school['total_students'] }} students)</strong>
-            <ul>
+        <div class="school-card">
+            <h3 class="school-name">{{ school['name'] }}</h3>
+            
+            <div class="school-stats">
+                <div class="stat">
+                    <div class="stat-number">{{ school['group_count'] }}</div>
+                    <div class="stat-text">Groups</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">{{ school['total_students'] }}</div>
+                    <div class="stat-text">Students</div>
+                </div>
+            </div>
+            
+            <div class="groups-list">
                 {% for group in school['groups'] %}
-                <li>
-                    {{ group.name }} - Passcode: {{ group.passcode }} - {{ group.student_count }} students.
-                    <ul>
-                        <li><strong>Students:</strong></li>
+                <div class="group-item">
+                    <div class="group-header">
+                        <span class="group-name">{{ group.name }}</span>
+                        <span class="group-passcode">Passcode: {{ group.passcode }}</span>
+                    </div>
+                    <div class="student-count">{{ group.student_count }} students</div>
+                    
+                    <div class="students-list">
+                        <strong>Students:</strong>
                         {% for student in group['students'] %}
-                        <li>{{ student.name | title }}</li>
+                        <div class="student-item">{{ student.name | title }}</div>
                         {% endfor %}
-                    </ul>
-                </li>
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
-            <form action="{{ url_for('delete_school', id=school['id']) }}" method="POST" class="delete-form">
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this school? All participants and groups registered under this school will also be deleted!');">Delete</button>
-            </form>
-            <form action="{{ url_for('archive_school', school_id=school['id']) }}" method="POST" class="archive-form">
-                <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to archive this school?');">Archive School</button>
-            </form>
+            </div>
+            
+            <div class="action-buttons">
+                <form action="{{ url_for('delete_school', id=school['id']) }}" method="POST" class="delete-form">
+                    <button type="submit" class="btn-custom btn-delete" onclick="return confirm('Are you sure you want to delete this school? All participants and groups registered under this school will also be deleted!');">Delete School</button>
+                </form>
+                <form action="{{ url_for('archive_school', school_id=school['id']) }}" method="POST" class="archive-form">
+                    <button type="submit" class="btn-custom btn-archive" onclick="return confirm('Are you sure you want to archive this school?');">Archive School</button>
+                </form>
+            </div>
         </div>
         {% endfor %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function openNav() {
+        document.getElementById("mySidebar").style.width = "280px";
+        document.getElementById("main").style.marginLeft = "280px";
+        document.querySelector(".openbtn").style.display = "none";
+    }
+      
+    function closeNav() {
+        document.getElementById("mySidebar").style.width = "0";
+        document.getElementById("main").style.marginLeft = "0";
+        document.querySelector(".openbtn").style.display = "block";
+    }
+
+    window.onload = function() {
+        setTimeout(function() {
+            var flashes = document.getElementsByClassName('flash');
+            for (var i = 0; i < flashes.length; i++) {
+                flashes[i].style.opacity = '0';
+                setTimeout(function(flash) {
+                    flash.style.display = 'none';
+                }, 500, flashes[i]);
+            }
+        }, 3000);
+    };
+</script>
 {% endblock %}

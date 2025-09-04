@@ -156,7 +156,7 @@ class Question(db.Model):
     season = db.Column(db.Integer, nullable=False)
     subject = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+
 # Initialize database
 with app.app_context():
     db.create_all()

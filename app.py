@@ -93,8 +93,12 @@ def game():
     # Now you can use school_id and group_passcode as needed
     school = School.query.filter_by(id=school_id).first()
     group = UserGroup.query.filter_by(school_id=school_id, passcode=group_passcode).first()
+    settings = Settings.query.first()
+    if not settings:
+        flash("Quiz settings not configured", "danger")
+        return redirect(url_for('index'))
 
-    return render_template("game.html", school=school, group=group)
+    return render_template("game.html", school=school, group=group, quiz_duration=settings.quiz_duration)
 
 @app.route('/admin_start_quiz', methods=['GET', 'POST'])
 @login_required
@@ -148,7 +152,7 @@ def admin_start_quiz():
         question_count=settings.question_count,
         current_season=settings.current_season,
         current_subject=settings.current_subject.title(),
-        quiz_duration=settings.quiz_duration // 60  # Convert seconds to minutes
+        quiz_duration=settings.quiz_duration  # Keep as seconds
     )
 
 @app.route('/highscores', methods=['GET', 'POST'])
@@ -263,14 +267,14 @@ def set_quiz_config():
             try:
                 current_season = int(current_season)
                 question_count = int(question_count)
-                quiz_duration = int(quiz_duration) * 60  # Convert minutes to seconds
+                quiz_duration = int(quiz_duration)  # Keep as seconds
                 
                 if question_count <= 0:
                     flash("Number of questions must be at least 1", "danger")
                     return redirect(url_for('settings'))
                 
                 if quiz_duration <= 0:
-                    flash("Quiz duration must be at least 1 minute", "danger")
+                    flash("Quiz duration must be at least 1 second", "danger")
                     return redirect(url_for('settings'))
                 
             except ValueError:
@@ -360,6 +364,8 @@ def admin_panel():
 @login_required
 def fetch_results(question_index):
     try:
+        print(f"Fetching results for question index: {question_index}")
+        
         # Define aliased models to avoid naming conflicts
         group_alias = aliased(UserGroup)
         school_alias = aliased(School)
@@ -372,27 +378,49 @@ def fetch_results(question_index):
             QuizResult.result,
             QuizResult.response_time,
             QuizResult.score
-        ).outerjoin(group_alias, group_alias.id == QuizResult.group_id) \
+        ).outerjoin(group_alias, group_alias.id == QuizResult.user_group_id) \
          .outerjoin(school_alias, school_alias.id == group_alias.school_id) \
          .filter(QuizResult.question_index == question_index) \
          .order_by(QuizResult.response_time) \
          .all()
+        
+        print(f"Raw SQLAlchemy results: {results}")
+        print(f"Number of results: {len(results)}")
 
         # Convert results to a list of dictionaries for JSON response
-        results_list = [{
-            'group_name': r.group_name,
-            'school_name': r.school_name,
-            'answer': r.answer,
-            'result': r.result,
-            'response_time': r.response_time,
-            'score': r.score
-        } for r in results]
-        
-        return jsonify({'results': results_list})
-    except Exception as e:
-        flash('Error fetching results:', e)
-        return jsonify({'error': 'Error fetching quiz results.'}), 500
+        results_list = []
+        for r in results:
+            result_dict = {
+                'group_name': r.group_name,
+                'school_name': r.school_name,
+                'answer': r.answer,
+                'result': r.result,
+                'response_time': float(r.response_time) if r.response_time else 0,
+                'score': float(r.score) if r.score else 0
+            }
+            results_list.append(result_dict)
+            print(f"Processed result: {result_dict}")
 
+        print(f"Final results_list: {results_list}")
+
+        # Return the results with success status
+        return jsonify({
+            'success': True,
+            'count': len(results_list),
+            'results': results_list
+        })
+        
+    except Exception as e:
+        print(f"Error fetching results: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Error fetching quiz results.'
+        }), 500
+    
 @app.route('/logout')
 @login_required
 def logout():
@@ -576,10 +604,10 @@ def delete_school(id):
         # Access the correct group and student relationships depending on the model
         if isinstance(school, School):
             groups = school.groups
-            students = school.students
+            students = school.users
         else:
             groups = school.archived_groups
-            students = school.archived_students
+            students = school.archived_users
 
         # Prevent deletion of Admin group
         if UserGroup.query.filter_by(school_id=school.id).first().is_admin:
@@ -623,7 +651,7 @@ def delete_user(user_id):
             flash(f'Student {user.fullname.upper()} has been deleted sucessfully.', 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f'Error deleting student: {e}', 'danger')
+            flash(f'Error deleting student: {str(e)}', 'danger')
     else:
         flash('Unauthorised action', 'danger')
     return redirect(url_for('settings'))
@@ -653,8 +681,8 @@ def add_school():
         flash(f"School '{school_name}' and groups added successfully.", 'success')
         return redirect(url_for('settings'))
     except Exception as e:
-        flash(f"Error adding school and groups: {e}")
-        print(f"Error adding school and groups: {e}")
+        flash(f"Error adding school and groups: {str(e)}")
+        print(f"Error adding school and groups: {str(e)}")
         return redirect(url_for('settings'))
 
 # For login (includes all schools)
@@ -1346,6 +1374,7 @@ def handle_submit_answer(data):
             result=result,
             response_time=response_time,
             score=score,  # Store the calculated score
+            school_id=group.school_id,
             season=1
         )
         db.session.add(quiz_result)
@@ -1419,7 +1448,7 @@ def handle_restart_quiz():
         emit('clear_messages', broadcast=True)
 
     except Exception as e:
-        flash(f'Error during restart quiz: {e}')
+        flash(f'Error during restart quiz: {str(e)}')
         # You might want to emit an error message back to the client
         emit('error_message', {'error': 'Failed to restart the quiz.'}, broadcast=True)
 
@@ -1464,7 +1493,7 @@ def handle_next_question():
         else:
             emit('message', 'End of quiz.', broadcast=True)
     except Exception as e:
-        flash(f"Error in next_question: {e}")
+        flash(f"Error in next_question: {str(e)}")
         emit('message', 'An error occurred while loading the next question.', room=request.sid)
 
 @app.route('/shutdown', methods=['POST'])

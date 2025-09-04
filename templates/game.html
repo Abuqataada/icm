@@ -3,22 +3,279 @@
 {% block title %}Quiz Session - ICM MATH CLICKATHON{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Ga+Maamli&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary-color: #4e54c8;
+        --secondary-color: #8f94fb;
+        --accent-color: #06b30e;
+        --error-color: #e74c3c;
+        --light-color: #ffffff;
+        --dark-color: #0e2238;
+        --text-light: #f8f9fa;
+        --text-dark: #212529;
+        --card-bg: rgba(255, 255, 255, 0.95);
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        --border-radius: 20px;
+        --transition: all 0.3s ease;
+    }
+    
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        min-height: 100vh;
+        background: url('/static/images/home_background-1.jpg') no-repeat center center fixed;
+        background-size: cover;
+        color: var(--text-light);
+        position: relative;
+    }
+    
+    body::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(14, 34, 56, 0.9) 0%, rgba(78, 84, 200, 0.85) 100%);
+        z-index: -1;
+    }
+    
+    .main {
+        padding: 20px;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .container {
+        max-width: 1000px;
+        width: 100%;
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        box-shadow: var(--shadow);
+        text-align: center;
+        color: var(--text-dark);
+    }
+    
+    .header {
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .title {
+        font-family: "Ga Maamli", sans-serif;
+        font-size: 2.8rem;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .subtitle {
+        font-size: 1.4rem;
+        color: var(--dark-color);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+    
+    .stats-container {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        margin: 20px 0;
+    }
+    
+    .stat-box {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        padding: 15px 25px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        min-width: 150px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 5px;
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .timer-container {
+        margin: 25px 0;
+    }
+    
+    .timer {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 15px 30px;
+        border-radius: 50px;
+        display: inline-block;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        transition: var(--transition);
+    }
+    
+    .timer.warning {
+        color: #e74c3c;
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+    
+    .choices-container {
+        margin-top: 30px;
+    }
+    
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+        margin-top: 20px;
+    }
+    
+    .choice-btn {
+        padding: 25px 15px;
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-align: center;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 15px;
+        cursor: pointer;
+        transition: var(--transition);
+        box-shadow: 0 8px 20px rgba(78, 84, 200, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .choice-btn:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: 0.5s;
+    }
+    
+    .choice-btn:hover:before {
+        left: 100%;
+    }
+    
+    .choice-btn:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 25px rgba(78, 84, 200, 0.4);
+    }
+    
+    .choice-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+    
+    .choice-btn.correct {
+        background: var(--accent-color);
+        box-shadow: 0 8px 20px rgba(6, 179, 14, 0.3);
+    }
+    
+    .choice-btn.incorrect {
+        background: var(--error-color);
+        box-shadow: 0 8px 20px rgba(231, 76, 60, 0.3);
+    }
+    
+    /* Fade animations */
+    .fade-out {
+        opacity: 0;
+        transition: opacity 0.5s ease-out;
+    }
+    
+    .fade-in {
+        opacity: 1;
+        transition: opacity 0.5s ease-in;
+    }
+    
+    @media (max-width: 768px) {
+        .title {
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+        }
+        
+        .stats-container {
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .stat-box {
+            width: 100%;
+            max-width: 200px;
+        }
+        
+        .grid-container {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .choice-btn {
+            padding: 20px 15px;
+            font-size: 1.5rem;
+        }
+        
+        .timer {
+            font-size: 2rem;
+            padding: 12px 25px;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="main p-3">
+<div class="main">
     <div class="container">
-        <div class="text-center">
-            <h1 class="ga-maamli-regular">ICM MATH CLICKATHON</h1>
-            <h4>{{ school.name }}</h4>
-            <h4>({{ group.name }})</h4>
-            <div class="tc" id="clientCount">Active Groups: 0</div>
-            <div class="tc" id="timer">[ 00:45 ]</div>
-            <div class="tc" id="choices"></div>
+        <div class="header">
+            <h1 class="title">ICM MATH CLICKATHON</h1>
+            <h4 class="subtitle">{{ school.name }}</h4>
+            <h4 class="subtitle">({{ group.name }})</h4>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-label">Active Groups</div>
+                <div class="stat-value" id="clientCount">0</div>
+            </div>
+        </div>
+        
+        <div class="timer-container">
+            <div class="timer" id="timer">00:00</div>
+        </div>
+        
+        <div class="choices-container">
+            <div id="choices"></div>
         </div>
     </div>
 </div>
@@ -35,6 +292,8 @@
     let questionStartTime = null;
     let selectedChoice = null;
     let answered = false;
+    // Get the quiz_duration from Flask template
+    const q_duration = {{ quiz_duration }};
 
     socket.on('connect', () => {
         console.log('Connected to server');
@@ -42,13 +301,14 @@
 
     socket.on('update_client_count', (count) => {
         connectedClientsCount = count;
-        document.getElementById('clientCount').textContent = `Active Groups: ${connectedClientsCount}`;
+        document.getElementById('clientCount').textContent = connectedClientsCount;
     });
 
     socket.on('new_question', (question) => {
         answered = false;
         currentQuestionIndex = question.index;
         const choicesDiv = document.getElementById('choices');
+        const timerElement = document.getElementById('timer');
         
         choicesDiv.classList.add('fade-out');
         
@@ -56,11 +316,13 @@
             choicesDiv.innerHTML = '';
             
             if (question.question !== '' && Object.values(question.choices).some(choice => choice !== '')) {
-                startTimer(45);
+                startTimer(q_duration);
                 questionStartTime = Date.now();
+                timerElement.classList.remove('warning');
             } else {
                 clearInterval(timerInterval);
-                document.getElementById('timer').textContent = '[ 00:00 ]';
+                timerElement.textContent = '00:00';
+                timerElement.classList.remove('warning');
             }
             
             choicesDiv.classList.add('grid-container');
@@ -68,7 +330,8 @@
             Object.entries(question.choices).forEach(([letter, choiceText]) => {
                 const choiceButton = document.createElement('button');
                 choiceButton.textContent = `${letter}`;
-                choiceButton.classList.add('grid-item');
+                choiceButton.classList.add('choice-btn');
+                choiceButton.id = `choice-${letter}`;
                 choiceButton.onclick = () => submitAnswer(letter);
                 choicesDiv.appendChild(choiceButton);
             });
@@ -76,7 +339,7 @@
             choicesDiv.classList.remove('fade-out');
             choicesDiv.classList.add('fade-in');
             
-            const buttons = choicesDiv.getElementsByClassName('grid-item');
+            const buttons = choicesDiv.getElementsByClassName('choice-btn');
             for (let button of buttons) {
                 button.disabled = false;
             }
@@ -90,7 +353,7 @@
     
     socket.on('answer_result', ({ correct_answer, response_time }) => {
         const choicesDiv = document.getElementById('choices');
-        const buttons = document.getElementsByClassName('grid-item');
+        const buttons = document.getElementsByClassName('choice-btn');
         
         if (buttons.length > 0) {
             for (let i = 0; i < buttons.length; i++) {
@@ -109,11 +372,8 @@
                 return;
             }
 
-            const clickedButtonIndex = letterToIndex[selectedChoice];
-            const correctButtonIndex = letterToIndex[correct_answer];
-
-            const clickedButton = buttons[clickedButtonIndex];
-            const correctButton = buttons[correctButtonIndex];
+            const clickedButton = document.getElementById(`choice-${selectedChoice}`);
+            const correctButton = document.getElementById(`choice-${correct_answer}`);
 
             if (!clickedButton || !correctButton) {
                 console.error('Button element not found');
@@ -121,12 +381,12 @@
             }
 
             if (selectedChoice === correct_answer) {
-                clickedButton.classList.remove('grid-item');
+                clickedButton.classList.remove('choice-btn');
                 clickedButton.classList.add('correct');
             } else {
-                clickedButton.classList.remove('grid-item');
+                clickedButton.classList.remove('choice-btn');
                 clickedButton.classList.add('incorrect');
-                correctButton.classList.remove('grid-item');
+                correctButton.classList.remove('choice-btn');
                 correctButton.classList.add('correct');
             }
         } else {
@@ -152,24 +412,34 @@
     function startTimer(duration) {
         timeLeft = duration;
         clearInterval(timerInterval);
+        const timerElement = document.getElementById('timer');
 
         timerInterval = setInterval(() => {
             if (timeLeft <= 0) {
                 clearInterval(timerInterval);
+                timerElement.classList.remove('warning');
                 if (!answered) {
                     submitAnswer(0);
                 }
             } else {
                 timeLeft--;
                 updateTimerDisplay();
+                
+                // Add warning class when time is running low
+                if (timeLeft <= 10) {
+                    timerElement.classList.add('warning');
+                }
             }
         }, 1000);
+        
+        // Initial display update
+        updateTimerDisplay();
     }
 
     function updateTimerDisplay() {
         const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
         const seconds = String(timeLeft % 60).padStart(2, '0');
-        document.getElementById('timer').textContent = `[ ${minutes}:${seconds} ]`;
+        document.getElementById('timer').textContent = `${minutes}:${seconds}`;
     }
 </script>
 {% endblock %}

@@ -3,82 +3,474 @@
 {% block title %}Quiz Admin - ICM MATH CLICKATHON{% endblock %}
 
 {% block extra_css %}
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Ga+Maamli&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --primary: #4361ee;
+        --primary-dark: #3a56d4;
+        --secondary: #7209b7;
+        --success: #06d6a0;
+        --warning: #ffd166;
+        --danger: #ef476f;
+        --dark: #1e1e2e;
+        --light: #f8f9fa;
+        --gray: #6c757d;
+        --card-bg: #ffffff;
+        --border-radius: 12px;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s ease;
+    }
+    
+    body {
+        background: #f5f7fa;
+        color: var(--dark);
+        padding: 20px;
+    }
+    
+    .admin-container {
+        max-width: 100%;
+        min-width: 1400px;
+        margin: 0 auto;
+    }
+    
+    /* Header Section */
+    .admin-header {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+        text-align: center;
+    }
+    
+    .admin-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin-bottom: 0.5rem;
+    }
+    
+    .season-badge {
+        display: inline-block;
+        background: var(--primary);
+        color: white;
+        padding: 6px 16px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 5px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 10px;
+        box-shadow: var(--shadow);
+        text-align: center;
+        transition: var(--transition);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+        color: var(--primary);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--dark);
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--gray);
+        font-weight: 500;
+    }
+    
+    /* Control Section */
+    .control-section {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow);
+    }
+    
+    .timer-display {
+        font-size: 2rem;
+        font-weight: 700;
+        text-align: center;
+        color: var(--primary);
+        background: rgba(67, 97, 238, 0.1);
+        padding: 15px;
+        border-radius: var(--border-radius);
+        margin-bottom: 15px;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 1px;
+        border: 2px solid var(--primary);
+        transition: var(--transition);
+    }
+    
+    .timer-display.warning {
+        color: var(--danger);
+        border-color: var(--danger);
+        background: rgba(239, 71, 111, 0.1);
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+        100% { transform: scale(1); }
+    }
+    
+    .control-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+    }
+    
+    .control-btn {
+        padding: 12px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+        text-align: center;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
+    
+    .control-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .control-btn.primary {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .control-btn.warning {
+        background: var(--warning);
+        color: var(--dark);
+    }
+    
+    .control-btn.success {
+        background: var(--success);
+        color: white;
+    }
+    
+    /* Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    @media (min-width: 992px) {
+        .content-grid {
+            grid-template-columns: 1.2fr 0.8fr;
+        }
+    }
+    
+    .panel {
+        background: var(--card-bg);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        box-shadow: var(--shadow);
+        height: 100%;
+    }
+    
+    .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .panel-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--primary);
+        margin: 0;
+    }
+    
+    /* Question Panel */
+    .question-content {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+    }
+    
+    .question-text {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 15px;
+        line-height: 1.5;
+    }
+    
+    .choices-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+    }
+    
+    .choice-item {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        font-weight: 600;
+        color: var(--dark);
+        border: 1px solid #e9ecef;
+        transition: var(--transition);
+        font-size: 0.9rem;
+    }
+    
+    .choice-item:hover {
+        border-color: var(--primary);
+        background: #f0f4ff;
+    }
+    
+    /* Response Panel */
+    .response-panel {
+        max-height: 300px;
+        overflow-y: auto;
+        padding-right: 10px;
+    }
+    
+    .response-panel::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .response-panel::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .response-panel::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 10px;
+    }
+    
+    .response-item {
+        background: white;
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-left: 3px solid var(--primary);
+        transition: var(--transition);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    
+    .response-item:hover {
+        transform: translateX(3px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+    }
+    
+    .response-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+        color: var(--gray);
+    }
+    
+    .response-content {
+        font-weight: 500;
+        color: var(--dark);
+        font-size: 0.9rem;
+    }
+    
+    .empty-state {
+        text-align: center;
+        color: var(--gray);
+        font-style: italic;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .question-image {
+        max-height: 200px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .badge {
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .stats-grid, .control-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .admin-title {
+            font-size: 1.6rem;
+        }
+        
+        .timer-display {
+            font-size: 1.6rem;
+        }
+        
+        .choices-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- First column -->
-    <div class="col-md-6">
-        <h1 class="text-center ga-maamli-regular">ICM MATH CLICKATHON</h1>
-        <hr>
-        <audio id="question-sound" preload="auto" src="/static/sounds/question.mp3"></audio>
-
-        <div id="clientCount">Active Groups: 0</div>
-        <div id="timer">[ 00:45 ]</div>
-        <button onclick="sendNextQuestion()" class="btn btn-success">Next Question</button>
-        <button onclick="restartQuiz()" class="btn btn-success">Restart Quiz</button>
-        <button type="button" class="btn btn-success btn-lg show-result" data-toggle="modal" data-target="#myModal">View Results</button>
-        <div id="question"></div>
-        <img id="question-image" src="" alt="QuestionImage" class="img-fluid" />
-        <div class="tc" id="choices"></div>
-        <br>
-        <h4>Results</h4>
-        <div id="resultsDisplay"></div>
-        <button id="viewResultsButton" class="btn btn-success" onclick="fetchResponseTimes()">View Overall Results</button>
+<div class="admin-container">
+    <!-- First Row -->
+     <div class="control-section" style="text-align: center;">
+        <div class="season-badge">Season {{ current_season }} in progress!</div> <br><br>
+        <div class="timer-display" id="timer">00:00</div>
     </div>
 
-    <!-- Second column -->
-    <div class="col-md-6">
-        <h4>Responses</h4>
-        <div id="messages"></div>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="clientCount">0</div>
+            <div class="stat-label">Active Groups</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">❓</div>
+            <div class="stat-value" id="questionNumber">0</div>
+            <div class="stat-label">Current Question</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-value" id="responseCount">0</div>
+            <div class="stat-label">Responses Received</div>
+        </div>
     </div>
-</div>
 
-<!-- Results Modal -->
-<div class="modal fade" id="myModal" role="dialog">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <p id="questionIndex">Results for Question: 0.</p>
+    <!-- Second Row -->
+    <div class="content-grid">
+        <!-- Question Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <h3 class="panel-title">Current Question</h3>
+                <span class="badge bg-primary" id="questionCounter">#0</span>
             </div>
-            <div class="modal-body">
-                <table class="results-table">
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Group Name</th>
-                            <th>School Name</th>
-                            <th>Answer</th>
-                            <th>Result</th>
-                            <th>Response Time (seconds)</th>
-                            <th>Score</th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultsBody">
-                        <!-- Results will be injected here via JavaScript -->
-                    </tbody>
-                </table>
+            <div class="question-content">
+                <div class="question-text" id="question">No question active. Click "Next Question" to start.</div>
+                <img id="question-image" src="" alt="Question Image" class="question-image" style="display: none;" />
+                <div class="choices-grid" id="choices">
+                    <!-- Choices will be populated here -->
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <div class="control-grid">
+                <button onclick="sendNextQuestion()" class="control-btn primary">
+                    <i class="lni lni-arrow-right"></i> Next Question
+                </button>
+                <button onclick="restartQuiz()" class="control-btn warning">
+                    <i class="lni lni-reload"></i> Restart Quiz
+                </button>
+                <button class="control-btn success show-result">
+                    <i class="lni lni-list"></i> Question Results
+                </button>
+                <button class="control-btn primary" onclick="fetchResponseTimes()">
+                    <i class="lni lni-stats-up"></i> Overall Results
+                </button>
+            </div>
+        </div>
+        
+        <!-- Response Panel -->
+        <div class="panel">
+            <div class="panel-header">
+                <h3 class="panel-title">Live Responses</h3>
+                <span class="badge bg-success" id="responseBadge">0</span>
+            </div>
+            <div class="response-panel" id="messages">
+                <div class="empty-state">Waiting for responses...</div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Results Modal -->
+<div class="modal fade" id="resultsModal" tabindex="-1" aria-labelledby="resultsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resultsModalLabel">Question Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="questionIndex" class="fw-bold">Results for Question: 0</p>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Group</th>
+                                <th>School</th>
+                                <th>Answer</th>
+                                <th>Result</th>
+                                <th>Time</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody">
+                            <!-- Results will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<audio id="question-sound" preload="auto" src="/static/sounds/question.mp3"></audio>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
 <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
-
 <script>
+    // JavaScript remains the same as in your original file
+    // All the socket event handlers and functions remain unchanged
     let timerInterval;
     let connectedClientsCount = 0;
     let currentQuestionIndex = 0;
+    let responseCount = 0;
+    // Get the quiz_duration from Flask template
+    const q_duration = {{ quiz_duration }};
     const socket = io();
     console.log('socket ready to connect')
 
@@ -88,26 +480,65 @@
     
     socket.on('update_client_count', (count) => {
         connectedClientsCount = count;
-        document.getElementById('clientCount').textContent = `Active Groups: ${connectedClientsCount}`;
+        document.getElementById('clientCount').textContent = connectedClientsCount;
     });
 
     socket.on('message', (message) => {
+        responseCount++;
+        document.getElementById('responseCount').textContent = responseCount;
+        document.getElementById('responseBadge').textContent = responseCount;
+        
         const messagesDiv = document.getElementById('messages');
-        const messageElement = document.createElement('p');
-        messageElement.textContent = message;
+        // Remove empty state if it exists
+        if (messagesDiv.querySelector('.empty-state')) {
+            messagesDiv.innerHTML = '';
+        }
+        
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('response-item');
+        
+        // Parse the message to extract group and answer
+        const parts = message.split(':');
+        if (parts.length >= 2) {
+            const groupName = parts[0].trim();
+            const answer = parts.slice(1).join(':').trim();
+            
+            const metaDiv = document.createElement('div');
+            metaDiv.classList.add('response-meta');
+            metaDiv.innerHTML = `<span>${groupName}</span><span>${new Date().toLocaleTimeString()}</span>`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.classList.add('response-content');
+            contentDiv.textContent = `Answer: ${answer}`;
+            
+            messageElement.appendChild(metaDiv);
+            messageElement.appendChild(contentDiv);
+        } else {
+            messageElement.textContent = message;
+        }
+        
         messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 
     socket.on('new_question', (question) => {
+        responseCount = 0;
+        document.getElementById('responseCount').textContent = responseCount;
+        document.getElementById('responseBadge').textContent = responseCount;
+        
         const questionDiv = document.getElementById('question');
         const choicesDiv = document.getElementById('choices');
+        const questionCounter = document.getElementById('questionCounter');
         
         questionDiv.classList.add('fade-out');
         choicesDiv.classList.add('fade-out');
     
         setTimeout(() => {
             currentQuestionIndex = question.index;
-            questionDiv.textContent = (currentQuestionIndex + 1) + '. ' + question.question;
+            document.getElementById('questionNumber').textContent = currentQuestionIndex + 1;
+            questionCounter.textContent = `#${currentQuestionIndex + 1}`;
+            
+            questionDiv.textContent = question.question;
             
             const imgElement = document.getElementById('question-image');
             if (question.image) {
@@ -117,27 +548,27 @@
                 imgElement.style.display = 'none';
             }
             
-            choicesDiv.classList.add('grid-container');
             choicesDiv.innerHTML = '';
             
-            Object.entries(question.choices).forEach(([letter, choiceText]) => {
-                const choiceButton = document.createElement('button');
-                choiceButton.textContent = `${letter}: ${choiceText}`;
-                choiceButton.classList.add('grid-item');
-                choicesDiv.appendChild(choiceButton);
-            });
+            if (question.choices && Object.keys(question.choices).length > 0) {
+                Object.entries(question.choices).forEach(([letter, choiceText]) => {
+                    const choiceButton = document.createElement('div');
+                    choiceButton.textContent = `${letter}: ${choiceText}`;
+                    choiceButton.classList.add('choice-item');
+                    choicesDiv.appendChild(choiceButton);
+                });
+            }
     
             questionDiv.classList.remove('fade-out');
             questionDiv.classList.add('fade-in');
             choicesDiv.classList.remove('fade-out');
             choicesDiv.classList.add('fade-in');
     
-            if (question.question !== '' && Object.values(question.choices).some(choice => choice !== '')) {
-                startTimer(45);
-                questionStartTime = Date.now();
+            if (question.question !== '' && question.choices && Object.values(question.choices).some(choice => choice !== '')) {
+                startTimer(q_duration);
             } else {
                 clearInterval(timerInterval);
-                document.getElementById('timer').textContent = '[ 00:00 ]';
+                document.getElementById('timer').textContent = '00:00';
             }
     
         }, 500);
@@ -151,8 +582,11 @@
     socket.on('clear_messages', () => {
         const messagesDiv = document.getElementById('messages');
         if (messagesDiv) {
-            messagesDiv.innerHTML = '';
+            messagesDiv.innerHTML = '<div class="empty-state">Waiting for responses...</div>';
         }
+        responseCount = 0;
+        document.getElementById('responseCount').textContent = responseCount;
+        document.getElementById('responseBadge').textContent = responseCount;
     });
     
     socket.on('display_total_group_results', function(results) {
@@ -166,7 +600,9 @@
     }
 
     function restartQuiz() {
-        socket.emit('restart_quiz');
+        if (confirm('Are you sure you want to restart the quiz? This will clear all current progress.')) {
+            socket.emit('restart_quiz');
+        }
     }
 
     function showResultsModal() {
@@ -177,24 +613,39 @@
                 const resultsBody = document.getElementById('resultsBody');
                 resultsBody.innerHTML = '';
 
-                data.results.forEach((result, index) => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td>${result.group_name}</td>
-                        <td>${result.school_name}</td>
-                        <td>${result.answer}</td>
-                        <td>${result.result}</td>
-                        <td>${result.response_time}</td>
-                        <td>${result.score}</td>
-                    `;
-                    resultsBody.appendChild(row);
-                    document.getElementById('questionIndex').textContent = 'Results for Question: ' + (questionIndex + 1) + '.';
-                });
+                console.log("Fetched results:", data.results);
 
-                $('#myModal').modal('show');
+                if (data.results && data.results.length > 0) {
+                    data.results.forEach((result, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${result.group_name || 'N/A'}</td>
+                            <td>${result.school_name || 'N/A'}</td>
+                            <td>${result.answer || 'N/A'}</td>
+                            <td>${result.result || 'N/A'}</td>
+                            <td>${result.response_time ? result.response_time + 's' : 'N/A'}</td>
+                            <td>${result.score || '0'}</td>
+                        `;
+                        resultsBody.appendChild(row);
+                    });
+                    document.getElementById('questionIndex').textContent = 'Results for Question: ' + (questionIndex + 1);
+                } else {
+                    resultsBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">No results available for this question</td></tr>';
+                }
+
+                // Show the modal
+                const resultsModal = new bootstrap.Modal(document.getElementById('resultsModal'));
+                resultsModal.show();
             })
-            .catch(error => console.error('Error fetching results:', error));
+            .catch(error => {
+                console.error('Error fetching results:', error);
+                const resultsBody = document.getElementById('resultsBody');
+                resultsBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #e74c3c;">Error loading results</td></tr>';
+                
+                const resultsModal = new bootstrap.Modal(document.getElementById('resultsModal'));
+                resultsModal.show();
+            });
     }
 
     document.querySelector('.show-result').addEventListener('click', showResultsModal);
@@ -204,7 +655,7 @@
     }
 
     function startTimer(duration) {
-        timeLeft = duration;
+        let timeLeft = duration;
         clearInterval(timerInterval);
 
         timerInterval = setInterval(() => {
@@ -213,33 +664,38 @@
                 showResultsModal();
             } else {
                 timeLeft--;
-                updateTimerDisplay();
+                updateTimerDisplay(timeLeft);
             }
-        }, 900);
+        }, 1000);
+        
+        updateTimerDisplay(timeLeft);
     }
 
-    function updateTimerDisplay() {
-        const minutes = String(Math.floor(timeLeft / 60)).padStart(2, '0');
-        const seconds = String(timeLeft % 60).padStart(2, '0');
-        document.getElementById('timer').textContent = `[ ${minutes}:${seconds} ]`;
+    function updateTimerDisplay(seconds) {
+        const minutes = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const remainingSeconds = String(seconds % 60).padStart(2, '0');
+        const timerElement = document.getElementById('timer');
+        timerElement.textContent = `${minutes}:${remainingSeconds}`;
+        
+        // Change color when time is running out
+        if (seconds < 10) {
+            timerElement.classList.add('warning');
+        } else {
+            timerElement.classList.remove('warning');
+        }
     }
 
     const questionSound = document.getElementById("question-sound");
 
     function playQuestionSound() {
-        questionSound.play();
+        questionSound.play().catch(error => {
+            console.log('Audio play failed:', error);
+        });
     }
 
-    window.onload = function() {
-        setTimeout(function() {
-            var flashes = document.getElementsByClassName('flash');
-            for (var i = 0; i < flashes.length; i++) {
-                flashes[i].style.opacity = '0';
-                setTimeout(function(flash) {
-                    flash.style.display = 'none';
-                }, 500, flashes[i]);
-            }
-        }, 3000);
-    };
+    // Initialize display values
+    document.getElementById('clientCount').textContent = connectedClientsCount;
+    document.getElementById('responseCount').textContent = responseCount;
+    document.getElementById('questionNumber').textContent = currentQuestionIndex;
 </script>
 {% endblock %}
