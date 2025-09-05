@@ -11,4 +11,4 @@ Requests
 SQLAlchemy
 Werkzeug
 gunicorn
-
+psycopg2-binary
