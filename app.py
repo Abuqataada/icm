@@ -719,10 +719,10 @@ def add_school():
         group_count = int(request.form['groupcount'])
         season = int(request.form['season'])
 
-        # Create a new school
+        # Create a new school WITHOUT specifying the ID
         new_school = School(name=school_name, season=season)
         db.session.add(new_school)
-        db.session.commit()  # Commit to get the school id
+        db.session.commit()  # Commit to get the auto-generated school id
 
         # Create the specified number of groups for the school
         for i in range(1, group_count + 1):
@@ -738,7 +738,7 @@ def add_school():
         flash(f"Error adding school and groups: {str(e)}")
         print(f"Error adding school and groups: {str(e)}")
         return redirect(url_for('settings'))
-
+        
 # For login (includes all schools)
 @app.route('/get-all-schools')
 def get_all_schools():
@@ -765,7 +765,8 @@ def get_regular_schools():
 def get_groups(school_id):
     groups = UserGroup.query.filter_by(school_id=school_id).all()
     group_list = [{
-        'id': group.id,
+        'id
+: group.id,
         'name': group.name,
         'student_count': len(group.users)  # Assuming `group.members` returns a list of students
     } for group in groups]
