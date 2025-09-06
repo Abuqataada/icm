@@ -765,11 +765,9 @@ def get_regular_schools():
 def get_groups(school_id):
     groups = UserGroup.query.filter_by(school_id=school_id).all()
     group_list = [{
-        'id
-: group.id,
+        'id': group.id,
         'name': group.name,
-        'student_count': len(group.users)  # Assuming `group.members` returns a list of students
-    } for group in groups]
+        'student_count': len(group.users)} for group in groups]
     
     return jsonify(group_list)
 
