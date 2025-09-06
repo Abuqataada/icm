@@ -160,6 +160,60 @@ def admin_start_quiz():
 def highscores():
     return render_template("highscores.html")
 
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    # Check if registration is allowed
+    settings = Settings.query.get(1)
+    if not settings or not settings.allow_registration:
+        flash('Registration is currently closed', 'danger')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        try:
+            fullname = request.form['fullname']
+            school_id = request.form['school_id']
+            group_id = request.form['group_id']
+            
+            # Validate inputs
+            if not all([fullname, school_id, group_id]):
+                flash('Please fill in all fields', 'danger')
+                return redirect(url_for('index'))
+            
+            # Check if school and group exist and belong together
+            school = School.query.get(school_id)
+            group = UserGroup.query.filter_by(id=group_id, school_id=school_id).first()
+            
+            if not school or not group:
+                flash('Invalid school or group selection', 'danger')
+                return redirect(url_for('index'))
+            
+            # Check if group is already full (max 4 students)
+            current_student_count = Users.query.filter_by(user_group_id=group_id).count()
+            if current_student_count >= 4:
+                flash('This group is already full (maximum 4 students)', 'danger')
+                return redirect(url_for('index'))
+            
+            # Create new user
+            new_user = Users(
+                fullname=fullname,
+                school_id=school_id,
+                user_group_id=group_id
+            )
+            
+            db.session.add(new_user)
+            db.session.commit()
+            
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('index'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Registration failed: {str(e)}', 'danger')
+            return redirect(url_for('index'))
+    
+    # For GET request, redirect to index (signup form is on index page)
+    return redirect(url_for('index'))
+    
 @app.route('/home', methods=['GET', 'POST'])
 def home():
     # Fetch the current setting
