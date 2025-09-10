@@ -15,9 +15,10 @@ import eventlet
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 import traceback
 import uuid
+import io
 
 
 
@@ -891,7 +892,192 @@ def add_question():
     return render_template(
         "add_questions.html",
         current_season=current_settings.current_season,
-        current_subject=current_settings.current_subject.title()
+        current_subject=current_settings.current_subject.title() if current_settings.current_subject else "General"
+    )
+
+@app.route('/bulk_upload_questions', methods=['POST'])
+def bulk_upload_questions():
+    if 'excel_file' not in request.files:
+        flash('No file uploaded', 'danger')
+        return redirect(url_for('add_question'))
+    
+    file = request.files['excel_file']
+    if file.filename == '':
+        flash('No file selected', 'danger')
+        return redirect(url_for('add_question'))
+    
+    # Check if file is allowed
+    def allowed_file(filename, allowed_extensions):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+    
+    if file and allowed_file(file.filename, {'xlsx', 'xls'}):
+        try:
+            # Read the Excel file
+            df = pd.read_excel(file)
+            
+            # Validate required columns
+            required_columns = ['Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer']
+            if not all(col in df.columns for col in required_columns):
+                flash('Excel file missing required columns. Please use the template.', 'danger')
+                return redirect(url_for('add_question'))
+            
+            success_count = 0
+            error_rows = []
+            
+            # Get current season and subject from session or form
+            # You might need to adjust this based on how you're storing these values
+            current_settings = Settings.query.first()
+            if current_settings:
+                current_season = current_settings.current_season
+                current_subject = current_settings.current_subject
+            else:
+                current_season = 1  # Default to 1 if not set
+                current_subject = 'General'  # Default to 'General' if not set
+
+            # Process each row
+            for index, row in df.iterrows():
+                row_num = index + 2  # +2 because Excel rows start at 1 and we have header row
+                
+                # Validate row data
+                question_text = str(row['Question Text']).strip()
+                option_a = str(row['Option A']).strip()
+                option_b = str(row['Option B']).strip()
+                option_c = str(row['Option C']).strip()
+                option_d = str(row['Option D']).strip()
+                correct_answer = str(row['Correct Answer']).strip().upper()
+                
+                # Skip empty rows
+                if not question_text:
+                    continue
+                
+                # Validate required fields
+                errors = []
+                if not question_text:
+                    errors.append('Question text is required')
+                if not option_a:
+                    errors.append('Option A is required')
+                if not option_b:
+                    errors.append('Option B is required')
+                if not option_c:
+                    errors.append('Option C is required')
+                if not option_d:
+                    errors.append('Option D is required')
+                if not correct_answer:
+                    errors.append('Correct answer is required')
+                elif correct_answer not in ['A', 'B', 'C', 'D']:
+                    errors.append('Correct answer must be A, B, C, or D')
+                
+                if errors:
+                    error_rows.append(f"Row {row_num}: {', '.join(errors)}")
+                    continue
+                
+                # Map correct answer to numeric value
+                correct_answer_map = {'A': 1, 'B': 2, 'C': 3, 'D': 4}
+                correct_answer_num = correct_answer_map[correct_answer]
+                
+                try:
+                    # Create new question using SQLAlchemy
+                    new_question = Question(
+                        question_text=question_text,
+                        option_a=option_a,
+                        option_b=option_b,
+                        option_c=option_c,
+                        option_d=option_d,
+                        correct_answer=correct_answer_num,
+                        season=current_season,
+                        subject=current_subject,
+                        created_at=datetime.now(timezone.utc)
+                    )
+                    
+                    db.session.add(new_question)
+                    db.session.commit()
+                    success_count += 1
+                    
+                except Exception as db_error:
+                    db.session.rollback()
+                    error_rows.append(f"Row {row_num}: Database error - {str(db_error)}")
+            
+            # Prepare flash messages
+            if success_count > 0:
+                flash(f'Successfully uploaded {success_count} questions', 'success')
+            
+            if error_rows:
+                error_msg = f'{len(error_rows)} rows had errors. First few: ' + '; '.join(error_rows[:3])
+                if len(error_rows) > 3:
+                    error_msg += f'... and {len(error_rows) - 3} more'
+                flash(error_msg, 'warning')
+                
+        except Exception as e:
+            flash(f'Error processing file: {str(e)}', 'danger')
+    else:
+        flash('Invalid file type. Please upload an Excel file (.xlsx or .xls)', 'danger')
+    
+    return redirect(url_for('add_question'))
+
+@app.route('/download_template')
+def download_template():
+    # Create a sample DataFrame with instructions
+    data = {
+        'Question Text': ['What is 2+2?', 'Capital of France?', 'Chemical symbol for gold'],
+        'Option A': ['3', 'London', 'Ag'],
+        'Option B': ['4', 'Berlin', 'Fe'],
+        'Option C': ['5', 'Madrid', 'Au'],
+        'Option D': ['6', 'Paris', 'Pb'],
+        'Correct Answer': ['B', 'D', 'C']
+    }
+    
+    df = pd.DataFrame(data)
+    
+    # Create instructions sheet
+    instructions_data = {
+        'Column': ['Question Text', 'Option A', 'Option B', 'Option C', 'Option D', 'Correct Answer'],
+        'Description': [
+            'The question text (required)',
+            'First answer option (required)',
+            'Second answer option (required)',
+            'Third answer option (required)',
+            'Fourth answer option (required)',
+            'Correct answer (A, B, C, or D, case insensitive)'
+        ]
+    }
+    
+    instructions_df = pd.DataFrame(instructions_data)
+    
+    # Create Excel file in memory
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Example Questions', index=False)
+        instructions_df.to_excel(writer, sheet_name='Instructions', index=False)
+        
+        # Get workbook and worksheet objects for formatting
+        workbook = writer.book
+        worksheet = writer.sheets['Example Questions']
+        
+        # Add some formatting
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'top',
+            'fg_color': '#D7E4BC',
+            'border': 1
+        })
+        
+        # Apply header format
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
+        
+        # Adjust column widths
+        worksheet.set_column('A:A', 30)  # Question Text
+        worksheet.set_column('B:E', 20)  # Options
+        worksheet.set_column('F:F', 15)  # Correct Answer
+    
+    output.seek(0)
+    
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name='question_upload_template.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
 
 @app.route('/generate_questions_json', methods=['POST'])

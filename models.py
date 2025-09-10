@@ -156,7 +156,7 @@ class Question(db.Model):
     image = db.Column(db.String(255), nullable=True)
     season = db.Column(db.Integer, nullable=False)
     subject = db.Column(db.String(50), nullable=False)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now(timezone.utc))
 
 
 

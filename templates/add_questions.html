@@ -25,81 +25,203 @@
                 {% endif %}
             {% endwith %}
 
-            <form id="questionForm" action="{{ url_for('add_question') }}" method="POST" enctype="multipart/form-data" novalidate>
-                <!-- Question Text Field -->
-                <div class="mb-4">
-                    <label for="question_text" class="form-label fw-bold">Question Text</label>
-                    <div class="card" id="TextFieldCard">
-                        <div class="card-header bg-light">
-                            <div id="toolbar" class="d-flex flex-wrap gap-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertAtCursor('power')">
-                                    <i class="lni lni-superscript"></i> Superscript
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs mb-4" id="questionTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="single-tab" data-bs-toggle="tab" data-bs-target="#single" type="button" role="tab" aria-controls="single" aria-selected="true">
+                        Single Question
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="bulk-tab" data-bs-toggle="tab" data-bs-target="#bulk" type="button" role="tab" aria-controls="bulk" aria-selected="false">
+                        Bulk Upload
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="questionTabsContent">
+                <!-- Single Question Tab -->
+                <div class="tab-pane fade show active" id="single" role="tabpanel" aria-labelledby="single-tab">
+                    <form id="questionForm" action="{{ url_for('add_question') }}" method="POST" enctype="multipart/form-data" novalidate>
+                        <!-- Question Text Field -->
+                        <div class="mb-4">
+                            <label for="question_text" class="form-label fw-bold">Question Text *</label>
+                            <div class="card" id="TextFieldCard">
+                                <div class="card-header bg-light">
+                                    <div id="toolbar" class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="power">
+                                            <i class="lni lni-superscript"></i> Superscript
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="subscript">
+                                            <i class="lni lni-subscript"></i> Subscript
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="root">
+                                            <i class="lni lni-math"></i> Root
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="fraction">
+                                            <i class="lni lni-divide"></i> Fraction
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" data-action="pi">
+                                            π Pi
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card-body p-0">
+                                    <textarea id="question_text" name="question_text" class="form-control p-3" 
+                                              style="min-height: 120px;" required placeholder="Enter your question here..." 
+                                              maxlength="1000"></textarea>
+                                </div>
+                                <div class="card-footer bg-light">
+                                    <small class="text-muted" id="charCount">0/1000 characters</small>
+                                </div>
+                            </div>
+                            <div class="form-text">Use the toolbar for mathematical notations. * Required field</div>
+                        </div>
+
+                        <!-- Options Section -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="option_a" class="form-label fw-bold">Option A *</label>
+                                <input type="text" class="form-control" id="option_a" name="option_a" required 
+                                       placeholder="Enter option A" maxlength="255">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="option_b" class="form-label fw-bold">Option B *</label>
+                                <input type="text" class="form-control" id="option_b" name="option_b" required 
+                                       placeholder="Enter option B" maxlength="255">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="option_c" class="form-label fw-bold">Option C *</label>
+                                <input type="text" class="form-control" id="option_c" name="option_c" required 
+                                       placeholder="Enter option C" maxlength="255">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="option_d" class="form-label fw-bold">Option D *</label>
+                                <input type="text" class="form-control" id="option_d" name="option_d" required 
+                                       placeholder="Enter option D" maxlength="255">
+                            </div>
+                        </div>
+
+                        <!-- Correct Answer and Image Upload -->
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3">
+                                <label for="correct_answer" class="form-label fw-bold">Correct Answer *</label>
+                                <select class="form-select" id="correct_answer" name="correct_answer" required>
+                                    <option value="" selected disabled>Select correct option</option>
+                                    <option value="1">Option A</option>
+                                    <option value="2">Option B</option>
+                                    <option value="3">Option C</option>
+                                    <option value="4">Option D</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="image" class="form-label fw-bold">Question Image (Optional)</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/png,image/jpeg,image/jpg,image/gif">
+                                <div class="form-text">Max 4MB (PNG, JPG, JPEG, GIF)</div>
+                                <div id="imagePreview" class="mt-2" style="display: none;">
+                                    <img id="previewImg" src="#" alt="Image preview" class="img-thumbnail" style="max-height: 150px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Validation Summary -->
+                        <div id="validationErrors" class="alert alert-danger d-none">
+                            <strong>Please fix the following errors:</strong>
+                            <ul id="errorList"></ul>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('questions_page') }}" class="btn btn-outline-secondary">
+                                <i class="lni lni-arrow-left"></i> Back to Questions
+                            </a>
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="lni lni-save"></i> Save Question
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertAtCursor('subscript')">
-                                    <i class="lni lni-subscript"></i> Subscript
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="insertAtCursor('root')">
-                                    <i class="lni lni-math"></i> Root
+                                <button type="button" class="btn btn-outline-primary" id="clearFormButton">
+                                    <i class="lni lni-trash"></i> Clear Form
                                 </button>
                             </div>
                         </div>
-                        <div class="card-body p-0">
-                            <textarea id="question_text" name="question_text" class="form-control p-3" 
-                                      style="min-height: 120px;" required></textarea>
+                    </form>
+                </div>
+
+                <!-- Bulk Upload Tab -->
+                <div class="tab-pane fade" id="bulk" role="tabpanel" aria-labelledby="bulk-tab">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Bulk Upload Questions</h5>
+                            <p class="card-text">
+                                Upload an Excel file (.xlsx) with questions. The file should follow the template format.
+                            </p>
+                            
+                            <form id="bulkUploadForm" action="{{ url_for('bulk_upload_questions') }}" method="POST" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="excel_file" class="form-label fw-bold">Excel File *</label>
+                                    <input type="file" class="form-control" id="excel_file" name="excel_file" accept=".xlsx,.xls" required>
+                                    <div class="form-text">Only .xlsx and .xls files are accepted</div>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <h6><i class="lni lni-info"></i> File Format Requirements:</h6>
+                                    <ul class="mb-0">
+                                        <li>Columns must be in this order: Question Text, Option A, Option B, Option C, Option D, Correct Answer</li>
+                                        <li>Correct Answer values: A, B, C, or D</li>
+                                        <li>First row should contain headers</li>
+                                        <li><a href="{{ url_for('download_template') }}" class="alert-link">Download Excel Template</a></li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mt-4">
+                                    <a href="{{ url_for('questions_page') }}" class="btn btn-outline-secondary">
+                                        <i class="lni lni-arrow-left"></i> Back to Questions
+                                    </a>
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="lni lni-upload"></i> Upload Questions
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                    <div class="form-text">Use the toolbar for mathematical notations</div>
                 </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- Options Section -->
-                <div class="row mb-4">
-                    <div class="col-md-6 mb-3">
-                        <label for="option_a" class="form-label fw-bold">Option A</label>
-                        <input type="text" class="form-control" id="option_a" name="option_a" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="option_b" class="form-label fw-bold">Option B</label>
-                        <input type="text" class="form-control" id="option_b" name="option_b" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="option_c" class="form-label fw-bold">Option C</label>
-                        <input type="text" class="form-control" id="option_c" name="option_c" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="option_d" class="form-label fw-bold">Option D</label>
-                        <input type="text" class="form-control" id="option_d" name="option_d" required>
-                    </div>
-                </div>
+    <!-- Quick Help Modal -->
+    <div class="mt-3">
+        <button type="button" class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#helpModal">
+            <i class="lni lni-question-circle"></i> Formatting Help
+        </button>
+    </div>
+</div>
 
-                <!-- Correct Answer and Image Upload -->
-                <div class="row mb-4">
-                    <div class="col-md-6 mb-3">
-                        <label for="correct_answer" class="form-label fw-bold">Correct Answer</label>
-                        <select class="form-select" id="correct_answer" name="correct_answer" required>
-                            <option value="" selected disabled>Select correct option</option>
-                            <option value="1">Option A</option>
-                            <option value="2">Option B</option>
-                            <option value="3">Option C</option>
-                            <option value="4">Option D</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="image" class="form-label fw-bold">Question Image (Optional)</label>
-                        <input type="file" class="form-control" id="image" name="image" accept="image/*">
-                        <div class="form-text">Max 4MB (PNG, JPG, JPEG, GIF)</div>
-                    </div>
-                </div>
-
-                <!-- Form Actions -->
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="{{ url_for('questions_page') }}" class="btn btn-outline-secondary">
-                        <i class="lni lni-arrow-left"></i> Back to Questions
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="lni lni-save"></i> Save Question
-                    </button>
-                </div>
-            </form>
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mathematical Notation Help</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Available Formatting:</h6>
+                <ul class="list-unstyled">
+                    <li><strong>Superscript:</strong> x², y³</li>
+                    <li><strong>Subscript:</strong> H₂O, x₁</li>
+                    <li><strong>Roots:</strong> √, ³√</li>
+                    <li><strong>Fractions:</strong> ½, ¾</li>
+                    <li><strong>Greek Letters:</strong> π, θ</li>
+                </ul>
+                <h6>Examples:</h6>
+                <p class="mb-1">• x² + y² = r²</p>
+                <p class="mb-1">• H₂O → Water</p>
+                <p class="mb-1">• √9 = 3</p>
+                <p class="mb-1">• ¾ of 100 = 75</p>
+                <p>• π ≈ 3.14159</p>
+            </div>
         </div>
     </div>
 </div>
@@ -127,30 +249,52 @@
         
         let insertText = '';
         let promptText = '';
+        let userInput = '';
         
         switch(type) {
             case 'power':
                 promptText = "Enter the exponent (e.g., 2 for x²):";
-                const power = prompt(promptText);
-                if (power) insertText = toSuperscript(power);
+                userInput = prompt(promptText);
+                if (userInput !== null) { // Check if user pressed Cancel
+                    insertText = toSuperscript(userInput);
+                }
                 break;
                 
             case 'subscript':
                 promptText = "Enter the subscript (e.g., 2 for x₂):";
-                const subscript = prompt(promptText);
-                if (subscript) insertText = toSubscript(subscript);
+                userInput = prompt(promptText);
+                if (userInput !== null) {
+                    insertText = toSubscript(userInput);
+                }
                 break;
                 
             case 'root':
                 promptText = "Enter the root index (e.g., 3 for cube root):";
-                const nth = prompt(promptText);
-                if (nth) {
-                    if (isNaN(nth) || nth < 2) {
+                userInput = prompt(promptText);
+                if (userInput !== null) {
+                    if (isNaN(userInput) || userInput < 2) {
                         alert("Please enter a valid number ≥ 2");
                         return;
                     }
-                    insertText = nth == 2 ? '√' : `${toSuperscript(nth)}√`;
+                    insertText = userInput == 2 ? '√' : `${toSuperscript(userInput)}√`;
                 }
+                break;
+                
+            case 'fraction':
+                promptText = "Enter fraction (e.g., '1/2' for ½):";
+                userInput = prompt(promptText);
+                if (userInput !== null) {
+                    const parts = userInput.split('/');
+                    if (parts.length === 2) {
+                        insertText = `${toSuperscript(parts[0])}⁄${toSubscript(parts[1])}`;
+                    } else {
+                        alert("Please enter fraction in format 'numerator/denominator'");
+                    }
+                }
+                break;
+                
+            case 'pi':
+                insertText = 'π';
                 break;
         }
         
@@ -163,18 +307,104 @@
             const newPos = startPos + insertText.length;
             textarea.setSelectionRange(newPos, newPos);
             textarea.focus();
+            
+            // Update character count
+            const charCount = textarea.value.length;
+            document.getElementById('charCount').textContent = `${charCount}/1000 characters`;
         }
     }
 
-    // Handle flash messages
+    // Clear form function
+    function clearForm() {
+        if (confirm('Are you sure you want to clear the form? All entered data will be lost.')) {
+            document.getElementById('questionForm').reset();
+            document.getElementById('charCount').textContent = '0/1000 characters';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('validationErrors').classList.add('d-none');
+        }
+    }
+
+    // DOM Content Loaded event to set up all event listeners
     document.addEventListener('DOMContentLoaded', function() {
+        // Character counter
+        document.getElementById('question_text').addEventListener('input', function() {
+            const charCount = this.value.length;
+            document.getElementById('charCount').textContent = `${charCount}/1000 characters`;
+        });
+
+        // Image preview
+        document.getElementById('image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 4 * 1024 * 1024) {
+                    alert('File size must be less than 4MB');
+                    this.value = '';
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImg').src = e.target.result;
+                    document.getElementById('imagePreview').style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Set up toolbar button event listeners
+        document.querySelectorAll('#toolbar button').forEach(button => {
+            button.addEventListener('click', function() {
+                const action = this.getAttribute('data-action');
+                insertAtCursor(action);
+            });
+        });
+
+        // Set up clear form button
+        document.getElementById('clearFormButton').addEventListener('click', clearForm);
+
+        // Form validation
+        document.getElementById('questionForm').addEventListener('submit', function(e) {
+            const errors = [];
+            const questionText = document.getElementById('question_text').value.trim();
+            const optionA = document.getElementById('option_a').value.trim();
+            const optionB = document.getElementById('option_b').value.trim();
+            const optionC = document.getElementById('option_c').value.trim();
+            const optionD = document.getElementById('option_d').value.trim();
+            const correctAnswer = document.getElementById('correct_answer').value;
+
+            if (!questionText) errors.push('Question text is required');
+            if (questionText.length > 1000) errors.push('Question text cannot exceed 1000 characters');
+            if (!optionA) errors.push('Option A is required');
+            if (!optionB) errors.push('Option B is required');
+            if (!optionC) errors.push('Option C is required');
+            if (!optionD) errors.push('Option D is required');
+            if (!correctAnswer) errors.push('Please select the correct answer');
+
+            if (errors.length > 0) {
+                e.preventDefault();
+                const errorList = document.getElementById('errorList');
+                const validationErrors = document.getElementById('validationErrors');
+                
+                errorList.innerHTML = '';
+                errors.forEach(error => {
+                    const li = document.createElement('li');
+                    li.textContent = error;
+                    errorList.appendChild(li);
+                });
+                
+                validationErrors.classList.remove('d-none');
+                validationErrors.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+
+        // Auto-hide flash messages
         setTimeout(function() {
-            const flashes = document.getElementsByClassName('alert');
-            for (let flash of flashes) {
+            const flashes = document.querySelectorAll('.alert:not(.alert-danger)');
+            flashes.forEach(flash => {
                 flash.style.opacity = '0';
                 setTimeout(() => flash.remove(), 500);
-            }
-        }, 3000);
+            });
+        }, 5000);
     });
 </script>
 {% endblock %}
