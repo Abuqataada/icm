@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="lni lni-pencil me-2"></i>Edit Question #{{ q.id }}
+                        </h5>
+                        <span class="badge bg-light text-primary">{{ current_subject }}</span>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <form method="post">
+                        <!-- Question Text -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Question Text</label>
+
+                            <!-- Toolbar for question_text -->
+                            <div id="toolbar-question" class="mb-2 d-flex flex-wrap gap-1 align-items-center">
+                                <button type="button" class="btn btn-sm btn-light border math-btn" data-action="power" data-target="question_text">x²</button>
+                                <button type="button" class="btn btn-sm btn-light border math-btn" data-action="subscript" data-target="question_text">x₂</button>
+                                <button type="button" class="btn btn-sm btn-light border math-btn" data-action="root" data-target="question_text">√</button>
+                                <button type="button" class="btn btn-sm btn-light border math-btn" data-action="fraction" data-target="question_text">a/b</button>
+
+                                <select class="form-select form-select-sm w-auto ms-1 math-symbols" data-target="question_text">
+                                    <option value="">Symbols ▼</option>
+                                    <option value="pi">π (pi)</option>
+                                    <option value="theta">θ (theta)</option>
+                                    <option value="sigma">∑ (sigma)</option>
+                                    <option value="integral">∫ (integral)</option>
+                                    <option value="leq">≤</option>
+                                    <option value="geq">≥</option>
+                                    <option value="neq">≠</option>
+                                    <option value="infty">∞</option>
+                                    <option value="plusminus">±</option>
+                                    <option value="times">×</option>
+                                    <option value="divide">÷</option>
+                                </select>
+                            </div>
+
+                            <textarea id="question_text" class="form-control" name="question_text" rows="4" required
+                                      placeholder="Enter your question here..." data-charcount="charCount_question" data-maxlength="1000">{{ q.question_text }}</textarea>
+                            <small id="charCount_question" class="text-muted">0/1000 characters</small>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="row mb-4">
+                            <!-- Option A -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 option-card">
+                                    <div class="card-header bg-light py-2">
+                                        <span class="fw-semibold text-primary">Option A</span>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <!-- Toolbar for option A -->
+                                        <div class="mb-2 d-flex flex-wrap gap-1 align-items-center">
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="power" data-target="option_a_text">x²</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="subscript" data-target="option_a_text">x₂</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="root" data-target="option_a_text">√</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="fraction" data-target="option_a_text">a/b</button>
+
+                                            <select class="form-select form-select-sm w-auto ms-1 math-symbols" data-target="option_a_text">
+                                                <option value="">Symbols ▼</option>
+                                                <option value="pi">π</option>
+                                                <option value="theta">θ</option>
+                                                <option value="sigma">∑</option>
+                                                <option value="integral">∫</option>
+                                                <option value="leq">≤</option>
+                                                <option value="geq">≥</option>
+                                                <option value="neq">≠</option>
+                                                <option value="infty">∞</option>
+                                                <option value="plusminus">±</option>
+                                                <option value="times">×</option>
+                                                <option value="divide">÷</option>
+                                            </select>
+                                        </div>
+
+                                        <textarea id="option_a_text" class="form-control" name="option_a" rows="2" required
+                                                  placeholder="Enter option A" data-charcount="charCount_option_a" data-maxlength="255">{{ q.option_a }}</textarea>
+                                        <small id="charCount_option_a" class="text-muted">0/255</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Option B -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 option-card">
+                                    <div class="card-header bg-light py-2">
+                                        <span class="fw-semibold text-primary">Option B</span>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <!-- Toolbar for option B -->
+                                        <div class="mb-2 d-flex flex-wrap gap-1 align-items-center">
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="power" data-target="option_b_text">x²</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="subscript" data-target="option_b_text">x₂</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="root" data-target="option_b_text">√</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="fraction" data-target="option_b_text">a/b</button>
+
+                                            <select class="form-select form-select-sm w-auto ms-1 math-symbols" data-target="option_b_text">
+                                                <option value="">Symbols ▼</option>
+                                                <option value="pi">π</option>
+                                                <option value="theta">θ</option>
+                                                <option value="sigma">∑</option>
+                                                <option value="integral">∫</option>
+                                                <option value="leq">≤</option>
+                                                <option value="geq">≥</option>
+                                                <option value="neq">≠</option>
+                                                <option value="infty">∞</option>
+                                                <option value="plusminus">±</option>
+                                                <option value="times">×</option>
+                                                <option value="divide">÷</option>
+                                            </select>
+                                        </div>
+
+                                        <textarea id="option_b_text" class="form-control" name="option_b" rows="2" required
+                                                  placeholder="Enter option B" data-charcount="charCount_option_b" data-maxlength="255">{{ q.option_b }}</textarea>
+                                        <small id="charCount_option_b" class="text-muted">0/255</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Option C -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 option-card">
+                                    <div class="card-header bg-light py-2">
+                                        <span class="fw-semibold text-primary">Option C</span>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <!-- Toolbar for option C -->
+                                        <div class="mb-2 d-flex flex-wrap gap-1 align-items-center">
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="power" data-target="option_c_text">x²</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="subscript" data-target="option_c_text">x₂</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="root" data-target="option_c_text">√</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="fraction" data-target="option_c_text">a/b</button>
+
+                                            <select class="form-select form-select-sm w-auto ms-1 math-symbols" data-target="option_c_text">
+                                                <option value="">Symbols ▼</option>
+                                                <option value="pi">π</option>
+                                                <option value="theta">θ</option>
+                                                <option value="sigma">∑</option>
+                                                <option value="integral">∫</option>
+                                                <option value="leq">≤</option>
+                                                <option value="geq">≥</option>
+                                                <option value="neq">≠</option>
+                                                <option value="infty">∞</option>
+                                                <option value="plusminus">±</option>
+                                                <option value="times">×</option>
+                                                <option value="divide">÷</option>
+                                            </select>
+                                        </div>
+
+                                        <textarea id="option_c_text" class="form-control" name="option_c" rows="2" required
+                                                  placeholder="Enter option C" data-charcount="charCount_option_c" data-maxlength="255">{{ q.option_c }}</textarea>
+                                        <small id="charCount_option_c" class="text-muted">0/255</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Option D -->
+                            <div class="col-md-6 mb-3">
+                                <div class="card h-100 option-card">
+                                    <div class="card-header bg-light py-2">
+                                        <span class="fw-semibold text-primary">Option D</span>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <!-- Toolbar for option D -->
+                                        <div class="mb-2 d-flex flex-wrap gap-1 align-items-center">
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="power" data-target="option_d_text">x²</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="subscript" data-target="option_d_text">x₂</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="root" data-target="option_d_text">√</button>
+                                            <button type="button" class="btn btn-sm btn-light border math-btn" data-action="fraction" data-target="option_d_text">a/b</button>
+
+                                            <select class="form-select form-select-sm w-auto ms-1 math-symbols" data-target="option_d_text">
+                                                <option value="">Symbols ▼</option>
+                                                <option value="pi">π</option>
+                                                <option value="theta">θ</option>
+                                                <option value="sigma">∑</option>
+                                                <option value="integral">∫</option>
+                                                <option value="leq">≤</option>
+                                                <option value="geq">≥</option>
+                                                <option value="neq">≠</option>
+                                                <option value="infty">∞</option>
+                                                <option value="plusminus">±</option>
+                                                <option value="times">×</option>
+                                                <option value="divide">÷</option>
+                                            </select>
+                                        </div>
+
+                                        <textarea id="option_d_text" class="form-control" name="option_d" rows="2" required
+                                                  placeholder="Enter option D" data-charcount="charCount_option_d" data-maxlength="255">{{ q.option_d }}</textarea>
+                                        <small id="charCount_option_d" class="text-muted">0/255</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Correct Answer -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Correct Answer</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="correct_answer" 
+                                           id="option_a" value="1" {% if q.correct_answer==1 %}checked{% endif %}>
+                                    <label class="form-check-label fw-medium" for="option_a">
+                                        Option A
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="correct_answer" 
+                                           id="option_b" value="2" {% if q.correct_answer==2 %}checked{% endif %}>
+                                    <label class="form-check-label fw-medium" for="option_b">
+                                        Option B
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="correct_answer" 
+                                           id="option_c" value="3" {% if q.correct_answer==3 %}checked{% endif %}>
+                                    <label class="form-check-label fw-medium" for="option_c">
+                                        Option C
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="correct_answer" 
+                                           id="option_d" value="4" {% if q.correct_answer==4 %}checked{% endif %}>
+                                    <label class="form-check-label fw-medium" for="option_d">
+                                        Option D
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 pt-3 border-top">
+                            <a class="btn btn-outline-secondary" href="{{ url_for('questions_page') }}">
+                                <i class="lni lni-arrow-left me-1"></i> Back to Questions
+                            </a>
+                            <div class="d-flex gap-2">
+                                <button type="reset" class="btn btn-outline-danger">
+                                    <i class="lni lni-reload me-1"></i> Reset
+                                </button>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="lni lni-save me-1"></i> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+.option-card {
+    transition: all 0.2s ease;
+    border: 1px solid #dee2e6;
+}
+.option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+</style>
+
+<script src="{{ url_for('static', filename='js/questions_toolbar.js') }}"></script>
+
+{% endblock %}

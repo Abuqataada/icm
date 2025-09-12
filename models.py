@@ -218,4 +218,4 @@ def create_default_admin():
 # Initialize database
 with app.app_context():
     db.create_all()
-    create_default_admin()
+    #create_default_admin()

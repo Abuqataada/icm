@@ -514,7 +514,8 @@ def questions_page():
     settings = Settings.query.first()
     current_season = settings.current_season if settings else 1
     current_subject = settings.current_subject if settings else 'math'
-    return render_template('add_questions.html', current_season=current_season, current_subject=current_subject)
+    questions = Question.query.order_by(Question.id.desc()).all()
+    return render_template('add_questions.html', current_season=current_season, current_subject=current_subject, questions=questions)
 
 
 
@@ -814,13 +815,6 @@ def add_question():
             
             # Validate required fields
             if not all([question_text, option_a, option_b, option_c, option_d, correct_answer]):
-                print("Missing required fields")
-                print("Question Text:", question_text)
-                print("Option A:", option_a)
-                print("Option B:", option_b)
-                print("Option C:", option_c)
-                print("Option D:", option_d)
-                print("Correct Answer:", correct_answer)
                 flash("Please fill in all required fields", "danger")
                 return redirect(url_for('add_question'))
             
@@ -874,7 +868,7 @@ def add_question():
                 image=image,
                 season=current_settings.current_season,
                 subject=current_settings.current_subject,
-                created_at=datetime.utcnow()
+                created_at=datetime.now(timezone.utc)
             )
             
             db.session.add(new_question)
@@ -889,11 +883,7 @@ def add_question():
             return redirect(url_for('add_question'))
     
     # For GET requests, show form with current configuration
-    return render_template(
-        "add_questions.html",
-        current_season=current_settings.current_season,
-        current_subject=current_settings.current_subject.title() if current_settings.current_subject else "General"
-    )
+    return redirect(url_for('questions_page'))
 
 @app.route('/bulk_upload_questions', methods=['POST'])
 def bulk_upload_questions():
@@ -1079,6 +1069,31 @@ def download_template():
         download_name='question_upload_template.xlsx',
         mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
+
+# ---------- inline edit ----------
+@app.route('/<int:q_id>/edit-question', methods=['GET', 'POST'])
+def edit_question(q_id):
+    q = Question.query.get_or_404(q_id)
+    if request.method == 'POST':
+        q.question_text = request.form['question_text']
+        q.option_a = request.form['option_a']
+        q.option_b = request.form['option_b']
+        q.option_c = request.form['option_c']
+        q.option_d = request.form['option_d']
+        q.correct_answer = int(request.form['correct_answer'])
+        db.session.commit()
+        flash('Question updated.', 'success')
+        return redirect(url_for('questions_page'))
+    return render_template('edit_question.html', q=q)
+
+# ---------- delete ----------
+@app.route('/<int:q_id>/delete-question', methods=['POST'])
+def delete_question(q_id):
+    q = Question.query.get_or_404(q_id)
+    db.session.delete(q)
+    db.session.commit()
+    flash('Question deleted.', 'info')
+    return redirect(url_for('questions.table'))
 
 @app.route('/generate_questions_json', methods=['POST'])
 @login_required
